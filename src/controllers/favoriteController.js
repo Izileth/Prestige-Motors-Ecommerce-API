@@ -1,0 +1,43 @@
+const prisma = require('../config/prisma');
+const { z } = require('zod');
+
+const saleSchema = z.object({
+    vehicleId: z.string(),
+    compradorId: z.string(),
+    precoVenda: z.number().positive(),
+    formaPagamento: z.string(),
+    parcelas: z.number().int().positive().optional(),
+    observacoes: z.string().optional()
+});
+
+exports.createSale = async (req, res) => {
+    try {
+        const data = saleSchema.parse(req.body);
+        
+        // Verificar se o veículo está disponível
+        const vehicle = await prisma.vehicle.findUnique({
+        where: { id: data.vehicleId }
+        });
+        
+        if (vehicle.status !== 'DISPONIVEL') {
+        return res.status(400).json({ error: 'Veículo não está disponível para venda' });
+        }
+        
+        const sale = await prisma.$transaction([
+        prisma.venda.create({
+            data: {
+            ...data,
+            vendedorId: req.user.id
+            }
+        }),
+        prisma.vehicle.update({
+            where: { id: data.vehicleId },
+            data: { status: 'VENDIDO' }
+        })
+        ]);
+        
+        res.status(201).json(sale);
+    } catch (error) {
+        // Tratamento de erros
+    }
+};

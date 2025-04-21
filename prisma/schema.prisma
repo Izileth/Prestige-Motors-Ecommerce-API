@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome                String
+  email               String      @unique
+  senha               String
+  role                String      @default("USER")
+  telefone            String?
+  enderecos           Endereco[] // Relação one-to-many
+  cpf                 String?    
+  dataNascimento      DateTime?
+  avatar              String?
+  emailVerificado     Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  vehicles            Vehicle[]
+  veiculosFavoritos   Favorito[]
+  visualizacoes       ViewLog[]
+  avaliacoes          Avaliacao[]
+  vendasComoVendedor  Venda[]     @relation("VendasComoVendedor")
+  vendasComoComprador Venda[]     @relation("VendasComoComprador")
+}
+
+model Vehicle {
+  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
+  marca                 String
+  modelo                String
+  anoFabricacao         Int
+  anoModelo             Int
+  preco                 Float
+  precoPromocional      Float?
+  descricao             String?
+  quilometragem         Float
+  tipoCombustivel       Combustivel
+  cambio                Cambio
+  cor                   String
+  portas                Int
+  finalPlaca            Int?
+  carroceria            Carroceria
+  potencia              Int? // cv
+  motor                 String?
+  categoria             Categoria
+  classe                Classe
+  imagens               Image[]
+  videos                Video[]
+  especificacoes        Json? // Detalhes técnicos em JSON
+  vendedorId            String        @db.ObjectId
+  vendedor              User          @relation(fields: [vendedorId], references: [id])
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  status                StatusVeiculo @default(DISPONIVEL)
+  visualizacoes         Int           @default(0)
+  favoritos             Favorito[]
+  visualizacoesDetalhes ViewLog[]
+  avaliacoes            Avaliacao[]
+  vendas                Venda[]
+  destaque              Boolean       @default(false)
+  seloOriginal          Boolean       @default(false)
+  aceitaTroca           Boolean       @default(false)
+  parcelamento          Float? // Valor da parcela exemplo
+
+  localizacao   Endereco? @relation(fields: [localizacaoId], references: [id])
+  localizacaoId String?   @unique @db.ObjectId // Adicione @unique aqui
+
+  @@index([marca])
+  @@index([modelo])
+  @@index([anoFabricacao])
+  @@index([anoModelo])
+  @@index([preco])
+  @@index([categoria])
+  @@index([classe])
+  @@index([status])
+  @@index([destaque])
+}
+
+model Endereco {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  cep         String
+  logradouro  String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  estado      String
+  pais        String   @default("Brasil")
+  latitude    Float?
+  longitude   Float?
+  vehicle     Vehicle?
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId // Chave estrangeira
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Favorito {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  vehicleId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  @@unique([userId, vehicleId])
+  @@index([userId])
+  @@index([vehicleId])
+}
+
+model ViewLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId String
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([vehicleId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Image {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  url       String
+  isMain    Boolean @default(false)
+  ordem     Int     @default(0)
+  vehicleId String  @db.ObjectId
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+}
+
+model Video {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  url       String
+  isMain    Boolean @default(false)
+  vehicleId String  @db.ObjectId
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+}
+
+model Avaliacao {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId  String
+  userId     String
+  rating     Int      @default(5) // 1-5 estrelas
+  comentario String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([vehicleId])
+  @@index([userId])
+}
+
+model Venda {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId      String
+  vendedorId     String
+  compradorId    String
+  precoVenda     Float
+  formaPagamento String
+  parcelas       Int?
+  observacoes    String?
+  dataVenda      DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  vendedor  User @relation("VendasComoVendedor", fields: [vendedorId], references: [id])
+  comprador User @relation("VendasComoComprador", fields: [compradorId], references: [id])
+
+  @@index([vehicleId])
+  @@index([vendedorId])
+  @@index([compradorId])
+  @@index([dataVenda])
+}
+
+enum Combustivel {
+  GASOLINA
+  ETANOL
+  FLEX
+  DIESEL
+  ELETRICO
+  HIBRIDO
+  GNV
+}
+
+enum Cambio {
+  MANUAL
+  AUTOMATICO
+  SEMI_AUTOMATICO
+  CVT
+}
+
+enum Carroceria {
+  HATCH
+  SEDAN
+  SUV
+  PICAPE
+  COUPE
+  CONVERSIVEL
+  PERUA
+  MINIVAN
+  VAN
+}
+
+enum Categoria {
+  ESPORTIVO
+  SUPER_ESPORTIVO
+  LUXO
+  CLASSICO
+  CONCEITO
+  TUNING
+}
+
+enum Classe {
+  ENTRY_LEVEL
+  INTERMEDIARIO
+  HIGH_END
+  HYPER_CAR
+}
+
+enum StatusVeiculo {
+  DISPONIVEL
+  RESERVADO
+  VENDIDO
+  INDISPONIVEL
+}
