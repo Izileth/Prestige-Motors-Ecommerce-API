@@ -214,6 +214,15 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     try {
+
+        if (!req.body || typeof req.body !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'invalid_request',
+                message: 'Corpo da requisição inválido'
+            });
+        }
+
         // 1. Validação básica dos campos
         const { email, senha } = req.body;
         if (!email || !senha) {
@@ -223,6 +232,7 @@ const login = async (req, res) => {
                 message: 'Email e senha são obrigatórios'
             });
         }
+        
 
         // 2. Busca o usuário com tratamento case-insensitive
         const user = await prisma.user.findUnique({
@@ -258,31 +268,41 @@ const login = async (req, res) => {
             });
         }
 
+        
+
         // 5. Geração de token
+
         const token = jwt.sign(
             { 
-                id: user.id,
-                role: user.role 
+            id: user.id,
+            role: user.role 
             }, 
             process.env.JWT_SECRET, 
-            { expiresIn: '1d' }
+            { expiresIn: '1d' } // Aumentei para 7 dias
         );
 
-        // 6. Resposta com cookie seguro
-        res.cookie('token', token, {
+
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000
-        }).json({
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+            path: '/',
+            domain: process.env.COOKIE_DOMAIN || 'localhost'
+        };
+
+
+        // 6. Resposta com cookie seguro
+        res.cookie('token', token, cookieOptions)
+            .status(200)
+            .json({
             success: true,
             user: {
                 id: user.id,
                 nome: user.nome,
                 email: user.email,
                 role: user.role
-            },
-            message: 'Login realizado com sucesso'
+            }
         });
 
     } catch (error) {
@@ -305,6 +325,27 @@ const login = async (req, res) => {
     }
 };
 
+
+const logout = async (req, res) => {
+  try {
+        const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        path: '/',
+        };
+        
+        res.clearCookie('token', cookieOptions)
+        .status(200)
+        .json({ success: true });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'logout_error',
+            message: 'Erro ao fazer logout'
+            });
+    }
+};
 const uploadAvatar = async (req, res) => {
     const { id } = req.params;
     const avatarUrl = req.file.path; // Após upload via multer+Cloudinary
@@ -670,7 +711,65 @@ const updateAddress = async (req, res) => {
     }
 };
 
-const getUserSales = async (req, res) => {
+const deleteAddress = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+
+        // 1. Verificar se o endereço existe e pertence ao usuário
+        const address = await prisma.endereco.findUnique({
+            where: { id: addressId },
+            select: { userId: true }
+        });
+
+        if (!address) {
+            return res.status(404).json({
+                success: false,
+                error: 'address_not_found',
+                message: 'Endereço não encontrado'
+            });
+        }
+
+        // 2. Verificar se o usuário tem permissão (dono ou admin)
+        if (address.userId !== req.user.id && req.user.role !== 'ADMIN') {
+            return res.status(403).json({
+                success: false,
+                error: 'forbidden',
+                message: 'Você não tem permissão para excluir este endereço'
+            });
+        }
+
+        // 3. Deletar o endereço
+        await prisma.endereco.delete({
+            where: { id: addressId }
+        });
+
+        // 4. Retornar sucesso
+        res.json({
+            success: true,
+            message: 'Endereço deletado com sucesso',
+            deletedAddressId: addressId
+        });
+
+    } catch (error) {
+        console.error('Erro ao deletar endereço:', error);
+        
+        // Tratamento específico para erros do Prisma
+        if (error.code === 'P2025') {
+            return res.status(404).json({
+                success: false,
+                error: 'address_not_found',
+                message: 'Endereço não encontrado'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'server_error',
+            message: 'Erro ao deletar endereço'
+        });
+    }
+};
+const getUserSalesHistory = async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -705,49 +804,12 @@ const getUserSales = async (req, res) => {
     }
 };
 
-const getUserPurchases = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        // Verifica se o usuário está acessando suas próprias compras ou é admin
-        if (req.user.id !== id && req.user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Acesso não autorizado' });
-        }
-
-        const purchases = await prisma.venda.findMany({
-        where: { compradorId: id },
-        include: {
-            vehicle: {
-            select: {
-                marca: true,
-                modelo: true,
-                anoFabricacao: true,
-                imagens: {
-                where: { isMain: true },
-                take: 1
-                }
-            }
-            },
-            vendedor: {
-            select: {
-                nome: true,
-                telefone: true
-            }
-            }
-        },
-        orderBy: { dataVenda: 'desc' }
-        });
-
-        res.json(purchases);
-    } catch (error) {
-        handlePrismaError(error, res);
-    }
-};
 
 // No final do arquivo:
 module.exports = {
     register,
     login,
+    logout,
     getUsers,
     getUserById,
     updateUser,
@@ -756,7 +818,7 @@ module.exports = {
     getUserAddresses,
     createAddress,
     updateAddress,
-    getUserSales,
-    getUserPurchases,
+    deleteAddress,
+    getUserSalesHistory,
     uploadAvatar // Adicionado na exportação
 };

@@ -10,42 +10,43 @@ const {
     getUserVehicles,
     getUserVehicleStats,
     toggleFavorite,
-    getVehicleFavorites,
+    getUserFavorites,
     registerView,
     getVehicleViews,
     createReview,
     getVehicleReviews,
+    getVehiclesByVendor,
     updateVehicleStatus,
-    getVehiclesByVendor
 } = require('../controllers/vehicleController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { authenticate, authorize } = require('../middleware/authMiddleware');
 const { uploadImage, uploadVideo } = require('../middleware/uploadMiddleware');
 
 // Rotas públicas
 router.get('/', getVehicles);
-router.get('/:id', getVehicleById);
 router.get('/stats', getVehicleStats);
-router.get('/vendedor/:vendorId', getVehiclesByVendor); // Nova
-router.get('/:id/avaliacoes', getVehicleReviews); // Nova
+router.get('/:id', getVehicleById);
+router.get('/:id/reviews', getVehicleReviews);
+router.get('/vendors/:vendorId', getVehiclesByVendor);
 
 // Rotas autenticadas
-router.post('/', protect, createVehicle);
-router.post('/:id/images', protect, uploadImage);
-router.post('/:id/video', protect, uploadVideo, uploadVideo);
-router.post('/:id/visualizacao', registerView); // Nova
-router.post('/:id/favorito', protect, toggleFavorite); // Nova
-router.post('/:id/avaliar', protect, createReview); // Nova
+router.post('/', authenticate, authorize(['USER', 'ADMIN']), createVehicle);
+router.post('/:id/views', registerView);
+router.post('/:id/favorites', authenticate, toggleFavorite);
+router.post('/:id/reviews', authenticate, createReview);
 
+// Uploads (protegidos)
+router.post('/:id/images', authenticate, uploadImage);
+router.post('/:id/videos', authenticate, uploadVideo);
 
-// Rotas de usuário específico
-router.get('/meus/veiculos', protect, getUserVehicles);
-router.get('/meus/visuzalizacoes', protect, getVehicleViews);
-router.get('/meus/favoritos', protect, getVehicleFavorites); // Nova
-router.get('/meus/stats', protect, getUserVehicleStats);
+// Rotas do usuário atual
+router.get('/me/vehicles', authenticate, getUserVehicles);
+router.get('/me/views', authenticate, getVehicleViews);
+router.get('/me/favorites', authenticate, getUserFavorites);
+router.get('/me/vehicle-stats', authenticate, getUserVehicleStats);
 
-// Rotas de admin/vendedor
-router.put('/:id', protect, updateVehicle);
-router.put('/:id/status', protect, updateVehicleStatus); // Nova
-router.delete('/:id', protect, deleteVehicle);
+// Rotas de administração
+router.put('/:id', authenticate, authorize(['USER', 'ADMIN']), updateVehicle);
+router.put('/:id/status', authenticate, authorize(['ADMIN']), updateVehicleStatus);
+router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
 
 module.exports = router;

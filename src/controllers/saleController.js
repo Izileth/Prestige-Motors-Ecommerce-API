@@ -155,7 +155,59 @@ const getSalesByVehicle = async (req, res) => {
   }
 };
 
-const getSalesByUser = async (req, res) => {
+// Função já existente no seu controller (mantida para referência)
+const createSale = async (req, res) => {
+  try {
+    const saleData = saleSchema.parse(req.body);
+    
+    // Verifica se o veículo existe e está disponível
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: saleData.vehicleId }
+    });
+
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Veículo não encontrado' });
+    }
+
+    if (vehicle.status !== 'DISPONIVEL') {
+      return res.status(400).json({ error: 'Veículo não está disponível para venda' });
+    }
+
+    // Verifica se o comprador existe
+    const buyerExists = await prisma.user.findUnique({
+      where: { id: saleData.compradorId }
+    });
+
+    if (!buyerExists) {
+      return res.status(404).json({ error: 'Comprador não encontrado' });
+    }
+
+    // Transação: cria venda + atualiza status do veículo
+    const [sale] = await prisma.$transaction([
+      prisma.venda.create({
+        data: {
+          ...saleData,
+          vendedorId: req.user.id // O vendedor é o usuário autenticado
+        }
+      }),
+      prisma.vehicle.update({
+        where: { id: saleData.vehicleId },
+        data: { status: 'VENDIDO' }
+      })
+    ]);
+
+    res.status(201).json(sale);
+  } catch (error) {
+    console.error('Erro em createSale:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+    }
+    handlePrismaError(error);
+  }
+};
+
+
+const getSalesBySeller = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -222,62 +274,51 @@ const getSalesByUser = async (req, res) => {
   }
 };
 
-// Função já existente no seu controller (mantida para referência)
-const createSale = async (req, res) => {
+const getPurchasesByUser = async (req, res) => {
   try {
-    const saleData = saleSchema.parse(req.body);
+    const { id } = req.params;
     
-    // Verifica se o veículo existe e está disponível
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: saleData.vehicleId }
-    });
-
-    if (!vehicle) {
-      return res.status(404).json({ error: 'Veículo não encontrado' });
+    // Verifica se o usuário está acessando suas próprias compras ou é admin
+    if (req.user.id !== id && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Acesso não autorizado' });
     }
 
-    if (vehicle.status !== 'DISPONIVEL') {
-      return res.status(400).json({ error: 'Veículo não está disponível para venda' });
-    }
-
-    // Verifica se o comprador existe
-    const buyerExists = await prisma.user.findUnique({
-      where: { id: saleData.compradorId }
-    });
-
-    if (!buyerExists) {
-      return res.status(404).json({ error: 'Comprador não encontrado' });
-    }
-
-    // Transação: cria venda + atualiza status do veículo
-    const [sale] = await prisma.$transaction([
-      prisma.venda.create({
-        data: {
-          ...saleData,
-          vendedorId: req.user.id // O vendedor é o usuário autenticado
+    const purchases = await prisma.venda.findMany({
+    where: { compradorId: id },
+    include: {
+        vehicle: {
+        select: {
+            marca: true,
+            modelo: true,
+            anoFabricacao: true,
+            imagens: {
+            where: { isMain: true },
+            take: 1
+            }
         }
-      }),
-      prisma.vehicle.update({
-        where: { id: saleData.vehicleId },
-        data: { status: 'VENDIDO' }
-      })
-    ]);
+        },
+        vendedor: {
+        select: {
+            nome: true,
+            telefone: true
+        }
+        }
+    },
+    orderBy: { dataVenda: 'desc' }
+    });
 
-    res.status(201).json(sale);
-  } catch (error) {
-    console.error('Erro em createSale:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
-    }
-    handlePrismaError(error);
-  }
+    res.json(purchases);
+} catch (error) {
+    handlePrismaError(error, res);
+}
 };
 
 // No final do arquivo:
 module.exports = {
-   createSale,
-   getSalesByUser,
-   getSaleById,
-   getSalesByVehicle,
-   updateSale,
+    createSale,
+    getSalesBySeller,
+    getSaleById,
+    getSalesByVehicle,
+    getPurchasesByUser,
+    updateSale,
 };

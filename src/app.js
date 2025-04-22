@@ -20,14 +20,21 @@ app.use(xss());
 
 
 app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true, // ← Isso estava faltando (o mais importante)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Adicionei OPTIONS
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Authorization', 'Set-Cookie'] // Para o front-end acessar
+    exposedHeaders: ['Set-Cookie'] // Removi 'Authorization' pois não usaremos mais
 }));
-
 app.options('*', cors()); // Habilita OPTIONS para todas as rotas
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Expose-Headers', 'Set-Cookie');
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'DENY');
+    next();
+});
 
 
 // 5. Rate Limiting (limitação de requisições)
@@ -42,15 +49,10 @@ app.use(limiter);
 app.use(express.json());
 
 // 7. Rotas
-app.use('/api/usuarios', require('./routes/userRoutes'));
-app.use('/api/veiculos', require('./routes/vehicleRoutes'));
-app.use('/api/vendas', require('./routes/salesRoutes')); // Novo
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/vehicles', require('./routes/vehicleRoutes'));
+app.use('/api/sales', require('./routes/salesRoutes')); // Novo
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Expose-Headers', 'Authorization, Set-Cookie');
-    next();
-});
 
 
 //app.use('/api/avaliacoes', require('./routes/reviewRoutes')); // Novo
@@ -77,5 +79,7 @@ app.use((err, req, res, next) => {
         details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
+
+
 
 module.exports = app;
