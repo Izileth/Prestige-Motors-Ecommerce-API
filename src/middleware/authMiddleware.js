@@ -3,9 +3,25 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const authenticate = async (req, res, next) => {
+
+    console.log('Headers:', JSON.stringify(req.headers));
+    console.log('Cookies:', req.cookies);
+
     try {
         // 1. Verificar o cookie (não mais o header Authorization)
-        const token = req.cookies.token;
+        const tokenFromCookie = req.cookies?.token;
+        const tokenFromHeader = req.headers.authorization?.startsWith('Bearer ') 
+            ? req.headers.authorization.substring(7) 
+            : null;
+        const tokenFromQueryString = req.query?.token;
+        
+        const token = tokenFromCookie || tokenFromHeader || tokenFromQueryString;
+        
+        console.log('Token encontrado:', !!token);
+        console.log('Fonte do token:', 
+            tokenFromCookie ? 'cookie' : 
+            tokenFromHeader ? 'header' : 
+            tokenFromQueryString ? 'query' : 'nenhuma');
         
         if (!token) {
             return res.status(401).json({ 
@@ -17,6 +33,7 @@ const authenticate = async (req, res, next) => {
 
         // 2. Verificar e decodificar o token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Token decodificado:', decoded);
 
         // 3. Buscar o usuário no banco de dados (opcional - pode usar apenas os dados do token)
         const user = await prisma.user.findUnique({

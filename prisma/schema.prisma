@@ -66,9 +66,9 @@ model Vehicle {
   seloOriginal          Boolean       @default(false)
   aceitaTroca           Boolean       @default(false)
   parcelamento          Float? // Valor da parcela exemplo
-
+  
   localizacao   Endereco? @relation(fields: [localizacaoId], references: [id])
-  localizacaoId String?   @unique @db.ObjectId // Adicione @unique aqui
+  localizacaoId String?   @db.ObjectId // Sem @unique
 
   @@index([marca])
   @@index([modelo])
@@ -93,7 +93,7 @@ model Endereco {
   pais        String   @default("Brasil")
   latitude    Float?
   longitude   Float?
-  vehicle     Vehicle?
+  vehicles     Vehicle[] // Múltiplos veículos podem usar o mesmo endereço
   user        User     @relation(fields: [userId], references: [id])
   userId      String   @db.ObjectId // Chave estrangeira
   createdAt   DateTime @default(now())

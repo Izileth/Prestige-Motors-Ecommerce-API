@@ -290,13 +290,15 @@ const login = async (req, res) => {
             path: '/',
             domain: process.env.COOKIE_DOMAIN || 'localhost'
         };
+        
 
 
         // 6. Resposta com cookie seguro
         res.cookie('token', token, cookieOptions)
-            .status(200)
-            .json({
+        .status(200)
+        .json({
             success: true,
+            token, // <- aqui está o segredo!
             user: {
                 id: user.id,
                 nome: user.nome,
@@ -304,6 +306,7 @@ const login = async (req, res) => {
                 role: user.role
             }
         });
+
 
     } catch (error) {
         console.error('Login error:', error);
