@@ -96,7 +96,7 @@ model Endereco {
   vehicles     Vehicle[] // Múltiplos veículos podem usar o mesmo endereço
   user        User     @relation(fields: [userId], references: [id])
   userId      String   @db.ObjectId // Chave estrangeira
-  createdAt   DateTime @default(now())
+  createdAt   DateTime?  @default(now()) // Temporariamente nullable
   updatedAt   DateTime @updatedAt
 }
 
@@ -213,22 +213,38 @@ enum Carroceria {
   PERUA
   MINIVAN
   VAN
+  BUGGY     // Novo - offroad leve
+  OFFROAD       // Novo - offroad pesado
 }
 
 enum Categoria {
-  ESPORTIVO
-  SUPER_ESPORTIVO
-  LUXO
-  CLASSICO
-  CONCEITO
-  TUNING
+  HYPERCAR
+  SUPERCAR
+  SPORTS_CAR
+  CLASSIC_MUSCLE
+  MODERN_MUSCLE
+  RETRO_SUPER
+  DRIFT_CAR
+  TRACK_TOY
+  OFFROAD
+  BUGGY
+  PICKUP_4X4
+  SUV
+  HOT_HATCH
+  SALOON
+  GT
+  RALLY
+  CONCEPT
 }
 
 enum Classe {
-  ENTRY_LEVEL
-  INTERMEDIARIO
-  HIGH_END
-  HYPER_CAR
+  D
+  C
+  B
+  A
+  S1
+  S2
+  X
 }
 
 enum StatusVeiculo {

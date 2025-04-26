@@ -578,6 +578,7 @@ const updateVehicleStatus = async (req, res) => {
 };
 
 // 5. Função para obter estatísticas de visualizações de veículos do usuário
+
 const getUserVehicleStats = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -589,13 +590,21 @@ const getUserVehicleStats = async (req, res) => {
         
         // Estatísticas de visualizações
         const viewStats = await prisma.$transaction([
-            // Total de visualizações de todos os veículos do usuário
+            // Estatísticas agregadas dos veículos
             prisma.vehicle.aggregate({
                 where: { 
                     vendedorId: userId 
                 },
                 _sum: { 
-                    visualizacoes: true 
+                    visualizacoes: true,
+                    preco: true
+                },
+                _avg: {
+                    preco: true,
+                    quilometragem: true
+                },
+                _count: {
+                    _all: true
                 }
             }),
             
@@ -612,13 +621,21 @@ const getUserVehicleStats = async (req, res) => {
                     id: true,
                     marca: true,
                     modelo: true,
-                    ano: true,
+                    anoFabricacao: true,
+                    anoModelo: true,
+                    preco: true,
+                    precoPromocional: true,
                     visualizacoes: true,
-                    status: true
+                    status: true,
+                    imagens: {
+                        where: { isMain: true },
+                        take: 1,
+                        select: { url: true }
+                    }
                 }
             }),
             
-            // Visualizações por dia (últimos X dias)
+            // Visualizações detalhadas por período
             prisma.viewLog.groupBy({
                 by: ['createdAt'],
                 where: {
@@ -630,43 +647,80 @@ const getUserVehicleStats = async (req, res) => {
                     }
                 },
                 _count: {
-                    id: true
+                    _all: true
+                },
+                orderBy: {
+                    createdAt: 'asc'
                 }
             }),
             
-            // Quantidade de favoritos nos veículos do usuário
+            // Total de favoritos
             prisma.favorito.count({
                 where: {
                     vehicle: {
                         vendedorId: userId
                     }
                 }
+            }),
+            
+            // Distribuição por status
+            prisma.vehicle.groupBy({
+                by: ['status'],
+                where: {
+                    vendedorId: userId
+                },
+                _count: {
+                    _all: true
+                }
             })
         ]);
         
         // Formatar dados de visualizações por dia
-        const viewsByDay = {};
-        viewStats[2].forEach(day => {
-            const dateStr = day.createdAt.toISOString().split('T')[0];
-            viewsByDay[dateStr] = (viewsByDay[dateStr] || 0) + day._count.id;
+        const viewsByDayMap = new Map();
+        viewStats[2].forEach(item => {
+            const dateStr = item.createdAt.toISOString().split('T')[0];
+            viewsByDayMap.set(dateStr, (viewsByDayMap.get(dateStr) || 0) + item._count._all);
         });
         
-        // Converter para array para facilitar uso no frontend
-        const viewsByDayArray = Object.entries(viewsByDay).map(([date, count]) => ({
-            date,
-            count
-        })).sort((a, b) => a.date.localeCompare(b.date));
+        // Converter para array ordenado
+        const viewsByDay = Array.from(viewsByDayMap.entries())
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
         
+        // Formatar distribuição por status
+        const statusDistribution = viewStats[4].reduce((acc, curr) => {
+            acc[curr.status] = curr._count._all;
+            return acc;
+        }, {});
+        
+        // Resposta completa alinhada com o schema
         res.json({
-            totalViews: viewStats[0]._sum.visualizacoes || 0,
-            topVehicles: viewStats[1],
-            viewsByDay: viewsByDayArray,
-            totalFavorites: viewStats[3]
+            summary: {
+                totalVehicles: viewStats[0]._count._all || 0,
+                totalViews: viewStats[0]._sum.visualizacoes || 0,
+                totalValue: viewStats[0]._sum.preco || 0,
+                averagePrice: viewStats[0]._avg.preco || 0,
+                averageMileage: viewStats[0]._avg.quilometragem || 0,
+                totalFavorites: viewStats[3] || 0,
+                statusDistribution
+            },
+            topPerformers: viewStats[1].map(vehicle => ({
+                ...vehicle,
+                mainImage: vehicle.imagens[0]?.url || null
+            })),
+            viewsTrend: viewsByDay,
+            timeRange: {
+                start: startDate.toISOString(),
+                end: new Date().toISOString()
+            }
         });
+        
     } catch (error) {
+        console.error('Error in getUserVehicleStats:', error);
         handlePrismaError(error, res);
     }
 };
+
 const getVehicleById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -799,17 +853,15 @@ const deleteVehicle = async (req, res) => {
 const getVehicleStats = async (req, res) => {
     try {
         // Obter estatísticas agregadas
-        const [marcasCount, mediaPreco, mediaKm, mediaAno] = await Promise.all([
-            // Contagem por marca
+        const [marcasCount, mediaPreco, mediaKm, mediaAnoFabricacao, mediaAnoModelo] = await Promise.all([
+            // Contagem por marca (sintaxe correta para groupBy)
             prisma.vehicle.groupBy({
                 by: ['marca'],
                 _count: {
-                    _all: true
+                    marca: true
                 },
                 orderBy: {
-                    _count: {
-                        _all: 'desc'
-                    }
+                    marca: 'desc'
                 }
             }),
             
@@ -823,32 +875,42 @@ const getVehicleStats = async (req, res) => {
             // Média de km
             prisma.vehicle.aggregate({
                 _avg: {
-                    kilometragem: true
+                    quilometragem: true
                 }
             }),
             
-            // Média de ano
+            // Média de ano de fabricação
             prisma.vehicle.aggregate({
                 _avg: {
-                    ano: true
+                    anoFabricacao: true
+                }
+            }),
+            
+            // Média de ano do modelo
+            prisma.vehicle.aggregate({
+                _avg: {
+                    anoModelo: true
                 }
             })
         ]);
         
         res.json({
-            marcasCount: marcasCount.map(item => ({
+            marcas: marcasCount.map(item => ({
                 marca: item.marca,
-                count: item._count._all
+                quantidade: item._count.marca
             })),
-            mediaPreco: mediaPreco._avg.preco,
-            mediaKm: mediaKm._avg.kilometragem,
-            mediaAno: mediaAno._avg.ano
+            estatisticas: {
+                precoMedio: mediaPreco._avg.preco,
+                quilometragemMedia: mediaKm._avg.quilometragem,
+                anoFabricacaoMedio: mediaAnoFabricacao._avg.anoFabricacao,
+                anoModeloMedio: mediaAnoModelo._avg.anoModelo
+            }
         });
     } catch (error) {
+        console.error('Erro em getVehicleStats:', error);
         handlePrismaError(error, res);
     }
 };
-
 // Adicionar método para buscar veículos de um vendedor específico
 const getVehiclesByVendor = async (req, res) => {
     try {
@@ -1026,20 +1088,6 @@ const createReview = async (req, res) => {
         const { id } = req.params;
         const { rating, comentario } = req.body;
 
-        // Verifica se o usuário comprou o veículo
-        const hasPurchased = await prisma.venda.findFirst({
-        where: {
-            vehicleId: id,
-            compradorId: req.user.id
-        }
-        });
-
-        if (!hasPurchased) {
-        return res.status(403).json({ 
-            error: 'Você precisa ter comprado este veículo para avaliar' 
-        });
-        }
-
         const review = await prisma.avaliacao.create({
         data: {
             vehicleId: id,
@@ -1062,6 +1110,7 @@ const createReview = async (req, res) => {
         handlePrismaError(error, res);
     }
 };
+
 
 const getVehicleReviews = async (req, res) => {
     try {

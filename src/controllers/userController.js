@@ -62,20 +62,37 @@ const registerSchema = z.object({
 });
 // Schema de validação para atualização de usuário
 const updateUserSchema = z.object({
-    nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.').optional(),
-    email: z.string().email('Email inválido.').optional(),
-    telefone: z.string().regex(/^\d{10,11}$/, 'Telefone inválido.').optional(),
-    senha: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.').optional(),
-    cpf: z.string().regex(/^\d{11}$/, 'CPF inválido.').optional(),
+    nome: z.string().min(3).transform(val => val.trim()),
+    email: z.string().email().transform(val => val.toLowerCase().trim()),
+    senha: z.string().min(6),
+    telefone: z.string()
+                .min(10).max(11)
+                .regex(/^\d+$/)
+                .transform(val => val.replace(/\D/g, ''))
+                .optional(), // Tornando opcional
+    cpf: z.string()
+            .length(11)
+            .regex(/^\d+$/)
+            .optional()
+            .nullable()
+            .transform(val => val?.replace(/\D/g, '') || null),
     dataNascimento: z.string()
-        .refine(val => {
-            // Verifica se a string está no formato ISO 8601 (YYYY-MM-DD)
-            return /^\d{4}-\d{2}-\d{2}$/.test(val) && !isNaN(Date.parse(val));
-        }, {
-            message: 'Data de nascimento deve estar no formato YYYY-MM-DD'
-        })
-        .transform(val => new Date(val))
+        .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val))
         .optional()
+        .nullable()
+        .transform(val => val ? new Date(val) : null),
+    endereco: z.object({
+        rua: z.string().min(3),
+        numero: z.string().min(1),
+        complemento: z.string().optional().nullable(),
+        bairro: z.string().min(3),
+        cidade: z.string().min(3),
+        estado: z.string().length(2),
+        cep: z.string().regex(/^\d{8}$/),
+        latitude: z.number().optional().nullable(),
+        longitude: z.number().optional().nullable(),
+        pais: z.string().optional().default('Brasil')
+    }).optional().nullable()
 });
 
 const register = async (req, res) => {
@@ -441,8 +458,9 @@ const getUserById = async (req, res) => {
                         marca: true,
                         modelo: true,
                         preco: true,
-                        ano: true
-                    }
+                        anoFabricacao: true, 
+                        anoModelo: true     
+                    }                   
                 }
             }
         });
@@ -575,58 +593,68 @@ const deleteUser = async (req, res) => {
         handlePrismaError(error, res);
     }
 };
-
 const getUserStats = async (req, res) => {
     try {
+        console.log('Iniciando getUserStats'); // Log inicial
         const { id } = req.params;
+        console.log('ID recebido:', id); // Log do ID
 
         // Verificar se o usuário existe
+        console.log('Verificando existência do usuário...');
         const userExists = await prisma.user.findUnique({
             where: { id },
             select: { id: true }
         });
+        console.log('Resultado da verificação:', userExists);
 
         if (!userExists) {
+            console.log('Usuário não encontrado');
             return res.status(404).json({ message: 'Usuário não encontrado' });
         }
 
-        // Verificar se o usuário está acessando suas próprias estatísticas ou é um admin
+        // Verificar permissões
+        console.log('Verificando permissões...');
+        console.log('req.user.id:', req.user.id, 'id:', id, 'req.user.role:', req.user.role);
         if (req.user.id !== id && req.user.role !== 'ADMIN') {
+            console.log('Acesso negado');
             return res.status(403).json({ message: 'Acesso negado' });
         }
 
-        // Contar total de veículos
+        // Contar veículos
+        console.log('Contando veículos...');
         const totalVehicles = await prisma.vehicle.count({
             where: { vendedorId: id }
         });
+        console.log('Total de veículos:', totalVehicles);
 
-        // Valor total dos veículos
+        // Estatísticas
+        console.log('Buscando estatísticas...');
+       
         const vehicleStats = await prisma.vehicle.aggregate({
-            where: { vendedorId: id },
-            _sum: {
-                preco: true
-            },
-            _avg: {
-                preco: true,
-                ano: true
-            },
-            _min: {
-                preco: true
-            },
-            _max: {
-                preco: true
-            }
+        where: { vendedorId: id },
+        _sum: { preco: true },
+        _avg: { 
+            preco: true,
+            anoFabricacao: true, // Campo correto
+            anoModelo: true      // Ou este, dependendo da sua necessidade
+        },
+        _min: { preco: true },
+        _max: { preco: true }
         });
+        console.log('Estatísticas obtidas:', vehicleStats);
+
 
         res.json({
             totalVehicles,
             valorTotalInventario: vehicleStats._sum.preco || 0,
             precoMedio: vehicleStats._avg.preco || 0,
-            anoMedio: vehicleStats._avg.ano || 0,
+            anoFabricacaoMedio: vehicleStats._avg.anoFabricacao || 0,
+            anoModeloMedio: vehicleStats._avg.anoModelo || 0,
             precoMinimo: vehicleStats._min.preco || 0,
             precoMaximo: vehicleStats._max.preco || 0
         });
     } catch (error) {
+        console.error('Erro completo em getUserStats:', error);
         handlePrismaError(error, res);
     }
 };
@@ -714,64 +742,74 @@ const updateAddress = async (req, res) => {
     }
 };
 
+
 const deleteAddress = async (req, res) => {
     try {
-        const { addressId } = req.params;
-
-        // 1. Verificar se o endereço existe e pertence ao usuário
-        const address = await prisma.endereco.findUnique({
-            where: { id: addressId },
-            select: { userId: true }
+      const { addressId } = req.params;
+  
+      // 1. Verificar se o endereço existe usando findUnique
+      const addressExists = await prisma.endereco.findUnique({
+        where: { id: addressId },
+        select: { id: true }
+      });
+  
+      if (!addressExists) {
+        return res.status(404).json({
+          success: false,
+          error: 'address_not_found',
+          message: 'Endereço não encontrado'
         });
-
-        if (!address) {
-            return res.status(404).json({
-                success: false,
-                error: 'address_not_found',
-                message: 'Endereço não encontrado'
-            });
-        }
-
-        // 2. Verificar se o usuário tem permissão (dono ou admin)
-        if (address.userId !== req.user.id && req.user.role !== 'ADMIN') {
-            return res.status(403).json({
-                success: false,
-                error: 'forbidden',
-                message: 'Você não tem permissão para excluir este endereço'
-            });
-        }
-
-        // 3. Deletar o endereço
-        await prisma.endereco.delete({
-            where: { id: addressId }
+      }
+  
+      // 2. Atualizar o createdAt se for nulo (usando update)
+      try {
+        await prisma.endereco.update({
+          where: { id: addressId },
+          data: { 
+            createdAt: new Date() 
+          }
         });
-
-        // 4. Retornar sucesso
-        res.json({
-            success: true,
-            message: 'Endereço deletado com sucesso',
-            deletedAddressId: addressId
-        });
-
+      } catch (updateError) {
+        // Ignora erros de atualização (pode ser que createdAt já esteja válido)
+        console.log('Ignorando erro de atualização:', updateError.message);
+      }
+  
+      // 3. Agora deletar normalmente
+      await prisma.endereco.delete({
+        where: { id: addressId }
+      });
+  
+      res.json({
+        success: true,
+        message: 'Endereço deletado com sucesso'
+      });
+  
     } catch (error) {
-        console.error('Erro ao deletar endereço:', error);
-        
-        // Tratamento específico para erros do Prisma
-        if (error.code === 'P2025') {
-            return res.status(404).json({
-                success: false,
-                error: 'address_not_found',
-                message: 'Endereço não encontrado'
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            error: 'server_error',
-            message: 'Erro ao deletar endereço'
+      console.error('Erro detalhado:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+        stack: error.stack
+      });
+  
+      // Tratamento específico para erros do Prisma
+      if (error.code === 'P2025') {
+        return res.status(404).json({
+          success: false,
+          error: 'address_not_found',
+          message: 'Endereço não encontrado'
         });
+      }
+  
+      res.status(500).json({
+        success: false,
+        error: 'database_error',
+        message: 'Erro ao processar a solicitação'
+      });
     }
-};
+  };
+
+
 const getUserSalesHistory = async (req, res) => {
     try {
         const { id } = req.params;
