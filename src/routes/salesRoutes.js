@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
+
 const {
     createSale,
     updateSale,
     getSaleById,
-    getSalesByVehicle,
+    getPurchasesByUser,
     getSalesBySeller,
-    getPurchasesByUser // Nova função
-} = require('../controllers/saleController');
+    getSalesByVehicle,
+} = require('../modules/sales/salesModule')
+
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 
 // Rotas autenticadas

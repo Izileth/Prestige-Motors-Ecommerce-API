@@ -1,37 +1,56 @@
 const express = require('express');
 const router = express.Router();
+
+const {
+    createReview,
+    getVehicleReviews,
+} = require('../modules/reviews/reviewsModule')
+
 const {
     createVehicle,
     getVehicles,
     getVehicleById,
-    updateVehicle,
-    deleteVehicle,
-    getVehicleStats,
     getUserVehicles,
-    getUserVehicleStats,
-    toggleFavorite,
     getUserFavorites,
-    registerView,
-    getVehicleViews,
-    createReview,
-    getVehicleReviews,
+    getUserVehicleStats,
     getVehiclesByVendor,
+    getVehicleDetails,
+    getVehicleFavorites,
+    addFavoriteVehicle,
+    getVehicleStats,
+    updateVehicle,
     updateVehicleStatus,
-} = require('../controllers/vehicleController');
+    deleteVehicle,
+} = require('../modules/vehicles/vehicleModule')
+
+const {
+    registerView,
+    registerVehicleView,
+    getVehicleViews,
+} = require('../modules/views/viewsModule')
+
+const {
+    uploadImages,
+    uploadVideos
+} = require('../modules/uploads/uploadModule')
+
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 const { uploadImage, uploadVideo } = require('../middleware/uploadMiddleware');
 
 // Rotas públicas
 router.get('/', getVehicles);
 router.get('/stats', getVehicleStats);
+router.get('/favorites', authenticate, getVehicleFavorites)
 router.get('/:id', getVehicleById);
 router.get('/:id/reviews', getVehicleReviews);
+router.get('/:id/details', getVehicleDetails)
 router.get('/vendors/:vendorId', getVehiclesByVendor);
+
 
 // Rotas autenticadas
 router.post('/', authenticate, authorize(['USER', 'ADMIN']), createVehicle);
 router.post('/:id/views', registerView);
-router.post('/:id/favorites', authenticate, toggleFavorite);
+router.post('/:id/favorites', authenticate, addFavoriteVehicle);
 router.post('/:id/reviews', authenticate, createReview);
 
 // Uploads (protegidos)

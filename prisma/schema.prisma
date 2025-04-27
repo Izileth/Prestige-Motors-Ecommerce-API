@@ -27,6 +27,10 @@ model User {
   avaliacoes          Avaliacao[]
   vendasComoVendedor  Venda[]     @relation("VendasComoVendedor")
   vendasComoComprador Venda[]     @relation("VendasComoComprador")
+
+  // Recuperação de senha
+  resetToken          String?
+  resetTokenExpiry    DateTime?
 }
 
 model Vehicle {

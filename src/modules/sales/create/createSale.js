@@ -1,5 +1,7 @@
-const prisma = require('../config/prisma');
+const { PrismaClient } = require('@prisma/client');
 const { z } = require('zod');
+
+const prisma = new PrismaClient();
 
 const saleSchema = z.object({
     vehicleId: z.string(),
@@ -10,7 +12,8 @@ const saleSchema = z.object({
     observacoes: z.string().optional()
 });
 
-exports.createSale = async (req, res) => {
+
+const createSale = async (req, res) => {
     try {
         const data = saleSchema.parse(req.body);
         
@@ -38,6 +41,11 @@ exports.createSale = async (req, res) => {
         
         res.status(201).json(sale);
     } catch (error) {
-        // Tratamento de erros
+        console.error('Erro em createSale:', error);
+        res.status(500).json({ error: 'Erro ao criar vendas do usuário' });
     }
 };
+
+module.exports = {
+    createSale
+}
