@@ -4,8 +4,9 @@ const prisma = new PrismaClient();
 
 const authenticate = async (req, res, next) => {
 
-    console.log('Headers:', JSON.stringify(req.headers));
-    console.log('Cookies:', req.cookies);
+    console.log('Headers:', req.headers);
+    console.log('Cookies raw:', req.headers.cookie); // Verifica se o cookie chega cru
+    console.log('Parsed cookies:', req.cookies); // Deve mostrar o token após cookieParser
 
     try {
         // 1. Verificar o cookie (não mais o header Authorization)
@@ -28,6 +29,14 @@ const authenticate = async (req, res, next) => {
                 success: false,
                 error: 'not_authenticated',
                 message: 'Acesso não autorizado. Por favor, faça login.' 
+            });
+        }
+        if (!token) {
+            console.error('Token não encontrado em nenhuma fonte');
+            return res.status(401).json({ 
+                success: false,
+                error: 'missing_token',
+                message: 'Token não fornecido' 
             });
         }
 

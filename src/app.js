@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const xss = require('xss-clean');
 
+const cookieParser = require('cookie-parser');
+
 const app = express();
 
 // 1. Helmet (proteção de cabeçalhos HTTP)
@@ -18,6 +20,7 @@ app.use(xss());
 
 // 4. Configuração do CORS
 
+app.use(cookieParser());
 
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',

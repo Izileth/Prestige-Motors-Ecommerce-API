@@ -4,31 +4,19 @@ const prisma = new PrismaClient();
 
 const getUserSalesHistory = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { userId } = req.params;
         
-        // Verifica se o usuário está acessando suas próprias vendas ou é admin
-        if (req.user.id !== id && req.user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Acesso não autorizado' });
+        if (req.user.id !== userId && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
         const sales = await prisma.venda.findMany({
-        where: { vendedorId: id },
-        include: {
-            vehicle: {
-            select: {
-                marca: true,
-                modelo: true,
-                anoFabricacao: true
-            }
+            where: { vendedorId: userId },
+            include: {
+                vehicle: { select: { marca: true, modelo: true, anoFabricacao: true } },
+                comprador: { select: { nome: true, email: true } }
             },
-            comprador: {
-            select: {
-                nome: true,
-                email: true
-            }
-            }
-        },
-        orderBy: { dataVenda: 'desc' }
+            orderBy: { dataVenda: 'desc' }
         });
 
         res.json(sales);
@@ -36,7 +24,6 @@ const getUserSalesHistory = async (req, res) => {
         handlePrismaError(error, res);
     }
 };
-
 module.exports = {
     getUserSalesHistory
 }

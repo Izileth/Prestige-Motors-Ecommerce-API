@@ -15,7 +15,7 @@ model User {
   role                String      @default("USER")
   telefone            String?
   enderecos           Endereco[] // Relação one-to-many
-  cpf                 String?    
+  cpf     String?  @unique // Adicione se CPF deve ser único
   dataNascimento      DateTime?
   avatar              String?
   emailVerificado     Boolean     @default(false)
@@ -169,25 +169,38 @@ model Avaliacao {
 }
 
 model Venda {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  vehicleId      String
-  vendedorId     String
-  compradorId    String
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId      String     @db.ObjectId
+  vendedorId     String     @db.ObjectId
+  compradorId    String     @db.ObjectId
   precoVenda     Float
   formaPagamento String
   parcelas       Int?
   observacoes    String?
-  dataVenda      DateTime @default(now())
+  categoria             Categoria
+  status         String?    @default("CONCLUIDA")
+  categoriaVeiculo String?  // Novo campo
+  dataVenda      DateTime   @default(now())
+  dataCriacao    DateTime   @default(now())
+  dataAtualizacao DateTime  @updatedAt
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
-
-  vendedor  User @relation("VendasComoVendedor", fields: [vendedorId], references: [id])
-  comprador User @relation("VendasComoComprador", fields: [compradorId], references: [id])
+  // Relações
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  vendedor  User    @relation("VendasComoVendedor", fields: [vendedorId], references: [id])
+  comprador User    @relation("VendasComoComprador", fields: [compradorId], references: [id])
 
   @@index([vehicleId])
   @@index([vendedorId])
   @@index([compradorId])
   @@index([dataVenda])
+  @@index([status])         // Novo índice
+  @@index([categoria]) // Novo índice
+}
+
+enum VendaStatus {
+  PENDENTE
+  CONCLUIDA
+  CANCELADA
 }
 
 enum Combustivel {

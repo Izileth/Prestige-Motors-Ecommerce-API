@@ -12,35 +12,26 @@ const handlePrismaError = (error) => {
 
 const getPurchasesByUser = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { userId } = req.params;
         
-        // Verifica se o usuário está acessando suas próprias compras ou é admin
-        if (req.user.id !== id && req.user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Acesso não autorizado' });
+        if (req.user.id !== userId && !['ADMIN', 'USER'].includes(req.user.role)) {
+            return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
         const purchases = await prisma.venda.findMany({
-        where: { compradorId: id },
-        include: {
-            vehicle: {
-            select: {
-                marca: true,
-                modelo: true,
-                anoFabricacao: true,
-                imagens: {
-                where: { isMain: true },
-                take: 1
-                }
-            }
+            where: { compradorId: userId },
+            include: {
+                vehicle: {
+                    select: {
+                        marca: true,
+                        modelo: true,
+                        anoFabricacao: true,
+                        imagens: { where: { isMain: true }, take: 1 }
+                    }
+                },
+                vendedor: { select: { nome: true, telefone: true } }
             },
-            vendedor: {
-            select: {
-                nome: true,
-                telefone: true
-            }
-            }
-        },
-        orderBy: { dataVenda: 'desc' }
+            orderBy: { dataVenda: 'desc' }
         });
 
         res.json(purchases);
