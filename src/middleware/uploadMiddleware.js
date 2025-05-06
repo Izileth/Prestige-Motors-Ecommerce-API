@@ -1,10 +1,21 @@
-const multer = require('multer');
-const { imageStorage, videoStorage } = require('../config/cloudinary');
+const uploadMiddleware = (req, res, next) => {
+    // Converte removedImages para array (se for string JSON)
+    if (typeof req.body.removedImages === 'string') {
+        try {
+        req.body.removedImages = JSON.parse(req.body.removedImages);
+        } catch {
+        req.body.removedImages = [];
+        }
+    }
+    
+    // Garante que é sempre um array
+    if (!Array.isArray(req.body.removedImages)) {
+        req.body.removedImages = [];
+    }
 
-// Upload de imagens
-const uploadImage = multer({ storage: imageStorage }).array('images', 10); // Máx. 10 imagens
+    next();
+};
 
-// Upload de vídeos
-const uploadVideo = multer({ storage: videoStorage }).single('video'); // 1 vídeo por vez
-
-module.exports = { uploadImage, uploadVideo };
+module.exports = {
+    uploadMiddleware
+};

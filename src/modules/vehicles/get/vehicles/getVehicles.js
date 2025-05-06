@@ -59,6 +59,12 @@ const getVehicles = async (req, res) => {
                             nome: true,
                             email: true
                         }
+                    },
+                    imagens: {
+                        select: 
+                        { 
+                            url: true 
+                        }
                     }
                 },
                 skip: (pageNum - 1) * limitNum,

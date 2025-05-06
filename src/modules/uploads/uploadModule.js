@@ -1,7 +1,6 @@
-const {uploadImages} = require('./images/uploadImages')
-const {uploadVideos} = require('./videos/uploadVideos')
+const {uploadVehicleImages, uploadVehicleVideos} = require('./midia/uploadMidia')
 
 module.exports = {
-    uploadImages,
-    uploadVideos
+    uploadVehicleImages,
+    uploadVehicleVideos
 }

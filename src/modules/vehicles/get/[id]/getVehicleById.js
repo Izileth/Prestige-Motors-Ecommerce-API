@@ -26,7 +26,6 @@ const handlePrismaError = (error, res) => {
     // Erro genérico
     return res.status(500).json({ message: 'Erro no servidor' });
 };
-
 const getVehicleById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -39,6 +38,29 @@ const getVehicleById = async (req, res) => {
                         nome: true,
                         email: true,
                         telefone: true
+                    }
+                },
+                imagens: {  // ← Adicione esta parte
+                    select: {
+                        id: true,
+                        url: true,
+                        isMain: true,
+                        ordem: true
+                    },
+                    orderBy: {
+                        ordem: 'asc'
+                    }
+                },
+                videos: {
+                    select: {
+                        id: true,
+                        url: true
+                    }
+                },
+                localizacao: {
+                    select: {
+                        cidade: true,
+                        estado: true
                     }
                 }
             }
