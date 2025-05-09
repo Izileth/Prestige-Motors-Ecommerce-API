@@ -4,6 +4,7 @@ const {deleteVehicle} = require('./delete/deleteVehicle')
 
 const {getVehicleFavorites} = require('./get/favorite/getVehicleFavorites')
 const {addFavoriteVehicle} = require('./favorite/addFavoriteVehicle')
+const {removeFavoriteVehicle} = require('./favorite/deleteFavoirteVehicle')
 const {getVehicleById} = require('./get/[id]/getVehicleById')
 const {getVehicleDetails} = require('./get/details/getVehicleDetails')
 const {getUserVehicleStats} = require('./get/stats/getUserVehicleStats')
@@ -27,6 +28,7 @@ module.exports = {
     getVehicleDetails,
     getVehicleFavorites,
     addFavoriteVehicle,
+    removeFavoriteVehicle,
     getVehiclesByVendor,
     getUserFavorites,
     getUserVehicleStats,

@@ -43,6 +43,17 @@ const getUserFavorites = async (req, res) => {
                 include: {
                     vehicle: {
                         include: {
+                            imagens: {
+                                select: {
+                                    id: true,
+                                    url: true,
+                                    isMain: true,
+                                    ordem: true
+                                },
+                                orderBy: {
+                                    ordem: 'asc'
+                                }
+                            },
                             vendedor: {
                                 select: {
                                     nome: true,

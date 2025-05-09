@@ -28,7 +28,6 @@ const handlePrismaError = (error, res) => {
 };
 const getUserVehicles = async (req, res) => {
     try {
-        // Obter o ID do usuário autenticado
         const userId = req.user.id;
 
         // Parâmetros de paginação e filtros
@@ -54,18 +53,18 @@ const getUserVehicles = async (req, res) => {
 
         // Construir condições de filtro
         const where = {
-            vendedorId: userId // Filtrar apenas veículos do usuário logado
+            vendedorId: userId
         };
 
-        // Filtros adicionais
+        // Filtros adicionais (mantenha os existentes)
         if (marca) where.marca = { contains: marca, mode: 'insensitive' };
         if (modelo) where.modelo = { contains: modelo, mode: 'insensitive' };
-        if (status) where.status = status; // Assumindo que você adicionou um campo status ao modelo
+        if (status) where.status = status;
 
         if (anoMin || anoMax) {
-            where.ano = {};
-            if (anoMin) where.ano.gte = parseInt(anoMin);
-            if (anoMax) where.ano.lte = parseInt(anoMax);
+            where.anoFabricacao = {};
+            if (anoMin) where.anoFabricacao.gte = parseInt(anoMin);
+            if (anoMax) where.anoFabricacao.lte = parseInt(anoMax);
         }
 
         if (precoMin || precoMax) {
@@ -75,12 +74,11 @@ const getUserVehicles = async (req, res) => {
         }
 
         if (kmMin || kmMax) {
-            where.kilometragem = {};
-            if (kmMin) where.kilometragem.gte = parseInt(kmMin);
-            if (kmMax) where.kilometragem.lte = parseInt(kmMax);
+            where.quilometragem = {};
+            if (kmMin) where.quilometragem.gte = parseInt(kmMin);
+            if (kmMax) where.quilometragem.lte = parseInt(kmMax);
         }
 
-        // Pesquisa global em marca e modelo
         if (search) {
             where.OR = [
                 { marca: { contains: search, mode: 'insensitive' } },
@@ -89,12 +87,11 @@ const getUserVehicles = async (req, res) => {
             ];
         }
 
-        // Configurar ordenação
         const orderFields = orderBy.split(',').map(field => ({
             [field]: orderDirection.toLowerCase() === 'asc' ? 'asc' : 'desc'
         }));
 
-        // Executar as consultas
+        // Atualize a consulta para incluir imagens
         const [vehicles, totalCount] = await Promise.all([
             prisma.vehicle.findMany({
                 where,
@@ -102,40 +99,45 @@ const getUserVehicles = async (req, res) => {
                 take: limitNum,
                 orderBy: orderFields,
                 include: {
-                    // Opcionalmente incluir informações relacionadas, como visualizações ou favoritos
-                    // Se tiver outros modelos relacionados, você pode incluí-los aqui
+                    imagens: {
+                        select: {
+                            id: true,
+                            url: true,
+                            isMain: true,
+                            ordem: true
+                        },
+                        orderBy: {
+                            ordem: 'asc'
+                        }
+                    },
+                    vendedor: {
+                        select: {
+                            id: true,
+                            nome: true
+                        }
+                    }
                 }
             }),
             prisma.vehicle.count({ where })
         ]);
 
-        // Adicionar estatísticas específicas do usuário
+        // Estatísticas
         const userStats = await prisma.$transaction([
-            // Quantidade total de veículos do usuário
             prisma.vehicle.count({ where: { vendedorId: userId } }),
-            
-            // Preço médio dos veículos do usuário
             prisma.vehicle.aggregate({
                 where: { vendedorId: userId },
                 _avg: { preco: true }
-            }),
-            
-            // Veículo mais visualizado (assumindo que existe um modelo ou campo de visualizações)
-            // Isso é apenas um exemplo - ajuste conforme seu modelo de dados
-            /*
-            prisma.vehicle.findFirst({
-                where: { vendedorId: userId },
-                orderBy: { visualizacoes: 'desc' }
             })
-            */
         ]);
 
-        // Calcular metadados da paginação
         const totalPages = Math.ceil(totalCount / limitNum);
 
-        // Resposta
         res.json({
-            data: vehicles,
+            data: vehicles.map(vehicle => ({
+                ...vehicle,
+                // Garante que imagens seja um array mesmo se vazio
+                imagens: vehicle.imagens || []
+            })),
             meta: {
                 currentPage: pageNum,
                 itemsPerPage: limitNum,
@@ -146,8 +148,7 @@ const getUserVehicles = async (req, res) => {
             },
             stats: {
                 totalVehicles: userStats[0],
-                averagePrice: userStats[1]._avg.preco,
-                // topVehicle: userStats[2] // Descomente se implementar a consulta acima
+                averagePrice: userStats[1]._avg.preco
             }
         });
     } catch (error) {
@@ -161,4 +162,4 @@ const getUserVehicles = async (req, res) => {
 
 module.exports = {
     getUserVehicles
-}
+};

@@ -14,13 +14,17 @@ const registerSchema = z.object({
                 .min(10).max(11)
                 .regex(/^\d+$/)
                 .transform(val => val.replace(/\D/g, ''))
-                .optional(), // Tornando opcional
-    cpf: z.string()
-            .length(11)
-            .regex(/^\d+$/)
-            .optional()
-            .nullable()
-            .transform(val => val?.replace(/\D/g, '') || null),
+                .optional(),
+
+                cpf: z.string()
+                .length(11)
+                .regex(/^\d+$/)
+                .optional()
+                .nullable()
+                .transform(val => val ? val.replace(/\D/g, '') : null)
+                .refine(val => val === null || val.length === 11, {
+                    message: "CPF deve ter 11 dígitos"
+                }),
     dataNascimento: z.string()
         .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val))
         .optional()
@@ -39,6 +43,8 @@ const registerSchema = z.object({
         pais: z.string().optional().default('Brasil')
     }).optional().nullable()
 });
+
+
 
 
 const register = async (req, res) => {
@@ -113,9 +119,12 @@ const register = async (req, res) => {
             senha: await bcrypt.hash(senha, 10),
             role: 'USER',
             ...(telefone && { telefone }),
-            ...(cpf && { cpf }),
             ...(dataNascimento && { dataNascimento })
         };
+
+        if (cpf) {
+            userData.cpf = cpf;
+        }
 
         // Adiciona o endereço apenas se existir
         if (endereco) {
@@ -149,23 +158,32 @@ const register = async (req, res) => {
             hasAddress: Boolean(user.enderecos?.length)
         });
 
-    } catch (error) {
+    } // Substitua o bloco catch atual por:
+    catch (error) {
         console.error('ERRO NO REGISTRO:', error);
         
-        // Tratamento específico para erros de constraint do Prisma
         if (error.code === 'P2002') {
-            const field = error.meta?.target?.[0];
-            const fieldName = field === 'User_cpf_key' ? 'cpf' : 
-                                field === 'User_email_key' ? 'email' : field; 
+            const target = error.meta?.target || '';
+            let field = 'dados';
+            let message = 'Já existe um registro com esses dados';
+    
+            if (typeof target === 'string') {
+                if (target.includes('email')) {
+                    field = 'email';
+                    message = 'Este email já está cadastrado';
+                } else if (target.includes('cpf')) {
+                    field = 'cpf';
+                    message = 'Este CPF já está cadastrado';
+                }
+            }
+    
             return res.status(409).json({
                 success: false,
-                error: `${fieldName}_already_exists`,
-                message: fieldName === 'cpf' 
-                    ? 'Este CPF já está cadastrado' 
-                    : 'Este email já está cadastrado'
+                error: `${field}_already_exists`,
+                message
             });
         }
-
+    
         return res.status(500).json({
             success: false,
             error: 'server_error',

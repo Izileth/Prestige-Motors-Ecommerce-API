@@ -18,13 +18,14 @@ const {
     getVehicleDetails,
     getVehicleFavorites,
     addFavoriteVehicle,
+    removeFavoriteVehicle,
     getVehicleStats,
     updateVehicle,
     updateVehicleStatus,
     deleteVehicle,
 } = require('../modules/vehicles/vehicleModule');
 
-const {uploadVehicleImages, uploadVehicleVideos} = require('../modules/uploads/uploadModule')
+const {uploadVehicleImages,deleteVehicleImage, uploadVehicleVideos} = require('../modules/uploads/uploadModule')
 
 const {
     registerView,
@@ -64,6 +65,15 @@ router.post('/:id/images',
     uploadVehicleImages
 );
 
+// NOVA ROTA: Remover imagem específica de um veículo
+
+
+router.delete('/:id/images',
+    authenticate,  // Comment this out temporarily if you're having auth issues during testing
+    authorize(['USER', 'ADMIN']),  // Comment this out temporarily if you're having auth issues during testing
+    deleteVehicleImage
+);
+
 // Rota para upload de vídeos
 router.post('/:id/videos', 
     authenticate,
@@ -93,7 +103,8 @@ router.put('/:id',
     updateVehicle
 );
 
-router.put('/:id/status', authenticate, authorize(['ADMIN']), updateVehicleStatus);
+router.put('/:id/status', authenticate, authorize(['USER', 'ADMIN']), updateVehicleStatus);
 router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
+router.delete('/:id/favorites', authenticate, removeFavoriteVehicle);
 
 module.exports = router;

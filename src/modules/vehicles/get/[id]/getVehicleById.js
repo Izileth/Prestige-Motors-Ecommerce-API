@@ -26,6 +26,7 @@ const handlePrismaError = (error, res) => {
     // Erro genérico
     return res.status(500).json({ message: 'Erro no servidor' });
 };
+
 const getVehicleById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -40,7 +41,7 @@ const getVehicleById = async (req, res) => {
                         telefone: true
                     }
                 },
-                imagens: {  // ← Adicione esta parte
+                imagens: {
                     select: {
                         id: true,
                         url: true,
@@ -62,13 +63,41 @@ const getVehicleById = async (req, res) => {
                         cidade: true,
                         estado: true
                     }
+                },
+                // Adicione este trecho para incluir as avaliações
+                avaliacoes: {
+                    include: {
+                        user: {
+                            select: {
+                                nome: true,
+                                avatar: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
                 }
             }
         });
         
         if (!vehicle) return res.status(404).json({ message: 'Veículo não encontrado' });
         
-        res.json(vehicle);
+        // Calcular a média das avaliações
+        const avgRating = vehicle.avaliacoes.length > 0 
+            ? vehicle.avaliacoes.reduce((sum, review) => sum + review.rating, 0) / vehicle.avaliacoes.length 
+            : 0;
+        
+        // Adicionar média e total de avaliações ao objeto de resposta
+        const responseVehicle = {
+            ...vehicle,
+            reviewStats: {
+                averageRating: avgRating,
+                totalReviews: vehicle.avaliacoes.length
+            }
+        };
+        
+        res.json(responseVehicle);
     } catch (error) {
         handlePrismaError(error, res);
     }

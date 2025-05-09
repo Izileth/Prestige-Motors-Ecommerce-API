@@ -10,12 +10,12 @@ datasource db {
 model User {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   nome                String
-  email               String      @unique
+  email               String  @unique  // Adicione esta linha
   senha               String
   role                String      @default("USER")
   telefone            String?
   enderecos           Endereco[] // Relação one-to-many
-  cpf     String?  @unique // Adicione se CPF deve ser único
+  cpf String?  // Sem @unique
   dataNascimento      DateTime?
   avatar              String?
   emailVerificado     Boolean     @default(false)
