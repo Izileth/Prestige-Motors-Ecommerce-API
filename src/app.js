@@ -42,8 +42,8 @@ app.use((req, res, next) => {
 
 // 5. Rate Limiting (limitação de requisições)
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Limite de 100 requisições por IP
+    windowMs: 60 * 1000, // 1 minuto
+    max: 30, // Limite de requisições por IP
     message: 'Muitas requisições deste IP, tente novamente mais tarde.'
 });
 app.use(limiter);
@@ -65,10 +65,10 @@ app.get('/api/teste', (req, res) => {
     res.json({ 
         message: 'API funcionando!',
         endpoints: {
-            usuarios: '/api/usuarios',
-            veiculos: '/api/veiculos',
-            vendas: '/api/vendas',
-            avaliacoes: '/api/avaliacoes'
+            usuarios: '/api/users',
+            veiculos: '/api/vehicles',
+            vendas: '/api/sales',
+            avaliacoes: '/api/reviews'
         }
     });
 });
