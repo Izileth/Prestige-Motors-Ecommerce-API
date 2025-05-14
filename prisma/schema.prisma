@@ -230,8 +230,8 @@ enum Carroceria {
   PERUA
   MINIVAN
   VAN
-  BUGGY     // Novo - offroad leve
-  OFFROAD       // Novo - offroad pesado
+  BUGGY @map("buggy")
+  OFFROAD @map("offroad")
 }
 
 enum Categoria {

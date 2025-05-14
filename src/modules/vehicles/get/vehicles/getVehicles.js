@@ -1,6 +1,32 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient, Carroceria, Categoria, Combustivel, Cambio } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+
+// Utilitário para sanitizar enums
+const sanitizeEnum = (value, enumType) => {
+  if (!value) return undefined;
+  
+  try {
+    const upperValue = value.toString().toUpperCase();
+    if (Object.values(enumType).includes(upperValue)) {
+      return upperValue;
+    }
+    
+    // Tenta encontrar por similaridade (case insensitive)
+    const found = Object.values(enumType).find(
+      e => e.toString().toUpperCase() === upperValue
+    );
+    return found || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+// Utilitário para sanitizar filtros numéricos
+const sanitizeNumber = (value, min, max) => {
+  const num = Number(value);
+  return isNaN(num) ? undefined : Math.max(min, Math.min(max, num));
+};
 
 const getVehicles = async (req, res) => {
     try {
@@ -17,6 +43,7 @@ const getVehicles = async (req, res) => {
             combustivel,
             cambio,
             categoria,
+            carroceria,
             destaque,
             kmMin,
             kmMax,
@@ -24,103 +51,158 @@ const getVehicles = async (req, res) => {
             orderDirection = 'desc'
         } = req.query;
 
-        const pageNum = parseInt(page);
-        const limitNum = parseInt(limit);
+        // Sanitização básica dos parâmetros
+        const pageNum = Math.max(1, parseInt(page) || 1);
+        const limitNum = Math.min(parseInt(limit) || 100, 200); // Limite máximo de 200 itens
 
-        // Build where clause based on filters
         const where = {
-            status: 'DISPONIVEL' // Only return available vehicles by default
+            status: 'DISPONIVEL'
         };
 
-        // Filter by specific user's vehicles
-        if (userId) where.vendedorId = userId;
-
-        // Basic text filters
-        if (marca) where.marca = { contains: marca, mode: 'insensitive' };
-        if (modelo) where.modelo = { contains: modelo, mode: 'insensitive' };
+        // Filtros de texto (com sanitização)
+        if (userId) where.vendedorId = userId.toString().trim();
+        if (marca) where.marca = { contains: marca.toString().trim(), mode: 'insensitive' };
+        if (modelo) where.modelo = { contains: modelo.toString().trim(), mode: 'insensitive' };
         
-        // Handle year filters - apply to both anoFabricacao and anoModelo
+        // Filtros numéricos com sanitização
         if (anoMin || anoMax) {
-            // Filter by fabrication year
             where.anoFabricacao = {};
-            if (anoMin) where.anoFabricacao.gte = parseInt(anoMin);
-            if (anoMax) where.anoFabricacao.lte = parseInt(anoMax);
-            
-            // Filter by model year
             where.anoModelo = {};
-            if (anoMin) where.anoModelo.gte = parseInt(anoMin);
-            if (anoMax) where.anoModelo.lte = parseInt(anoMax);
+            
+            const currentYear = new Date().getFullYear();
+            if (anoMin) {
+                const min = sanitizeNumber(anoMin, 1900, currentYear);
+                if (min) {
+                    where.anoFabricacao.gte = min;
+                    where.anoModelo.gte = min;
+                }
+            }
+            if (anoMax) {
+                const max = sanitizeNumber(anoMax, 1900, currentYear + 1);
+                if (max) {
+                    where.anoFabricacao.lte = max;
+                    where.anoModelo.lte = max;
+                }
+            }
         }
 
-        // Price range filter
+        // Faixa de preço
         if (precoMin || precoMax) {
             where.preco = {};
-            if (precoMin) where.preco.gte = parseFloat(precoMin);
-            if (precoMax) where.preco.lte = parseFloat(precoMax);
+            if (precoMin) {
+                const min = sanitizeNumber(precoMin, 0, Number.MAX_SAFE_INTEGER);
+                if (min) where.preco.gte = min;
+            }
+            if (precoMax) {
+                const max = sanitizeNumber(precoMax, 0, Number.MAX_SAFE_INTEGER);
+                if (max) where.preco.lte = max;
+            }
         }
 
-        // Mileage range filter (quilometragem in the schema)
+        // Quilometragem
         if (kmMin || kmMax) {
             where.quilometragem = {};
-            if (kmMin) where.quilometragem.gte = parseFloat(kmMin);
-            if (kmMax) where.quilometragem.lte = parseFloat(kmMax);
+            if (kmMin) {
+                const min = sanitizeNumber(kmMin, 0, 1000000);
+                if (min) where.quilometragem.gte = min;
+            }
+            if (kmMax) {
+                const max = sanitizeNumber(kmMax, 0, 1000000);
+                if (max) where.quilometragem.lte = max;
+            }
         }
 
-        // Enum filters
-        if (combustivel) where.tipoCombustivel = combustivel;
-        if (cambio) where.cambio = cambio;
-        if (categoria) where.categoria = categoria;
+        // Filtros de enum com sanitização
+        if (combustivel) {
+            const sanitized = sanitizeEnum(combustivel, Combustivel);
+            if (sanitized) where.tipoCombustivel = sanitized;
+        }
+        if (cambio) {
+            const sanitized = sanitizeEnum(cambio, Cambio);
+            if (sanitized) where.cambio = sanitized;
+        }
+        if (categoria) {
+            const sanitized = sanitizeEnum(categoria, Categoria);
+            if (sanitized) where.categoria = sanitized;
+        }
+        if (carroceria) {
+            const sanitized = sanitizeEnum(carroceria, Carroceria);
+            if (sanitized) where.carroceria = sanitized;
+        }
         
-        // Boolean filter
-        if (destaque !== undefined) where.destaque = destaque === 'true';
-
-        // Parse order by fields
-        const orderFields = {};
-        if (orderBy) {
-            const fields = orderBy.split(',');
-            fields.forEach(field => {
-                orderFields[field.trim()] = orderDirection.toLowerCase() === 'asc' ? 'asc' : 'desc';
-            });
-        } else {
-            orderFields.createdAt = 'desc'; // Default ordering
+        // Filtro booleano
+        if (destaque !== undefined) {
+            where.destaque = destaque.toString().toLowerCase() === 'true';
         }
 
-        // Execute query with pagination
-        const [vehicles, totalCount] = await Promise.all([
-            prisma.vehicle.findMany({
-                where,
-                include: {
-                    vendedor: {
-                        select: {
-                            nome: true,
-                            email: true,
-                            telefone: true
-                        }
-                    },
-                    imagens: {
-                        select: {
-                            url: true,
-                            isMain: true,
-                            ordem: true
+        // Ordenação com sanitização
+        const orderFields = {};
+        const validOrderFields = [
+            'createdAt', 'preco', 'quilometragem', 
+            'anoFabricacao', 'anoModelo', 'marca', 'modelo'
+        ];
+        
+        if (orderBy) {
+            const fields = orderBy.toString().split(',');
+            fields.forEach(field => {
+                const [fieldName, direction] = field.trim().split(':');
+                if (validOrderFields.includes(fieldName)) {
+                    const dir = direction && direction.toLowerCase() === 'asc' ? 'asc' : 'desc';
+                    orderFields[fieldName] = dir;
+                }
+            });
+        }
+        
+        if (Object.keys(orderFields).length === 0) {
+            orderFields.createdAt = 'desc';
+        }
+
+        // Execução segura da query
+        let vehicles = [];
+        let totalCount = 0;
+        
+        try {
+            [vehicles, totalCount] = await Promise.all([
+                prisma.vehicle.findMany({
+                    where,
+                    include: {
+                        vendedor: {
+                            select: {
+                                nome: true,
+                                email: true,
+                                telefone: true
+                            }
                         },
-                        orderBy: [
-                            { isMain: 'desc' },
-                            { ordem: 'asc' }
-                        ]
-                    },
-                    localizacao: {
-                        select: {
-                            cidade: true,
-                            estado: true
+                        imagens: {
+                            select: {
+                                url: true,
+                                isMain: true,
+                                ordem: true
+                            },
+                            orderBy: [
+                                { isMain: 'desc' },
+                                { ordem: 'asc' }
+                            ]
+                        },
+                        localizacao: {
+                            select: {
+                                cidade: true,
+                                estado: true
+                            }
                         }
-                    }
-                },
-                skip: (pageNum - 1) * limitNum,
-                take: limitNum,
-                orderBy: orderFields
-            }),
-            prisma.vehicle.count({ where })
-        ]);
+                    },
+                    skip: (pageNum - 1) * limitNum,
+                    take: limitNum,
+                    orderBy: orderFields
+                }),
+                prisma.vehicle.count({ where })
+            ]);
+        } catch (dbError) {
+            console.error('Database error:', dbError);
+            // Se houver erro na query, retorna uma lista vazia mas não quebra a resposta
+            vehicles = [];
+            totalCount = 0;
+        }
 
         const totalPages = Math.ceil(totalCount / limitNum);
 
@@ -132,20 +214,21 @@ const getVehicles = async (req, res) => {
                 totalItems: totalCount,
                 totalPages,
                 hasNextPage: pageNum < totalPages,
-                hasPrevPage: pageNum > 1
+                hasPrevPage: pageNum > 1,
+                filtersApplied: {
+                    ...(combustivel && { combustivel: where.tipoCombustivel || 'invalid' }),
+                    ...(cambio && { cambio: where.cambio || 'invalid' }),
+                    ...(categoria && { categoria: where.categoria || 'invalid' }),
+                    ...(carroceria && { carroceria: where.carroceria || 'invalid' })
+                }
             }
         });
     } catch (error) {
         console.error('Erro ao buscar veículos:', error);
-        if (error instanceof Error) {
-            if ('code' in error && error.code === 'P2010') {
-                res.status(500).json({ message: 'Erro de conexão com o banco de dados. Tente novamente mais tarde.' });
-            } else {
-                res.status(500).json({ message: 'Erro no servidor.', error: error.message });
-            }
-        } else {
-            res.status(500).json({ message: 'Erro desconhecido no servidor.' });
-        }
+        res.status(500).json({ 
+            message: 'Erro no servidor.',
+            ...(process.env.NODE_ENV === 'development' && { error: error.message })
+        });
     }
 };
 
