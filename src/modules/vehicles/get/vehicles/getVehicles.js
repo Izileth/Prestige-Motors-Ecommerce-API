@@ -4,22 +4,22 @@ const prisma = new PrismaClient();
 
 // Utilitário para sanitizar enums
 const sanitizeEnum = (value, enumType) => {
-  if (!value) return undefined;
-  
-  try {
-    const upperValue = value.toString().toUpperCase();
-    if (Object.values(enumType).includes(upperValue)) {
-      return upperValue;
-    }
+    if (!value) return undefined;
     
-    // Tenta encontrar por similaridade (case insensitive)
-    const found = Object.values(enumType).find(
-      e => e.toString().toUpperCase() === upperValue
-    );
-    return found || undefined;
-  } catch {
-    return undefined;
-  }
+    try {
+        const upperValue = value.toString().toUpperCase();
+        if (Object.values(enumType).includes(upperValue)) {
+        return upperValue;
+        }
+        
+        // Tenta encontrar por similaridade (case insensitive)
+        const found = Object.values(enumType).find(
+        e => e.toString().toUpperCase() === upperValue
+        );
+        return found || undefined;
+    } catch {
+        return undefined;
+    }
 };
 
 // Utilitário para sanitizar filtros numéricos
