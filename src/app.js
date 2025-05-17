@@ -23,7 +23,7 @@ app.use(xss());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173' || 'https://vortex-motors-services.vercel.app/',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
