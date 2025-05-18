@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 
+const { PrismaClient, Prisma } = require('@prisma/client'); // Adicione Prisma à importação
 
 const prisma = new PrismaClient();
 
@@ -27,34 +27,42 @@ const handlePrismaError = (error, res) => {
     // Erro genérico
     return res.status(500).json({ message: 'Erro no servidor' });
 };
-
-
 const deleteVehicle = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Verificar se o veículo existe e obter informações do vendedor
+        // Verificar se o veículo existe
         const vehicle = await prisma.vehicle.findUnique({
             where: { id },
-            select: {
-                id: true,
-                vendedorId: true
-            }
+            select: { vendedorId: true }
         });
-        
+
         if (!vehicle) {
             return res.status(404).json({ message: 'Veículo não encontrado' });
         }
-        
-        // Verificar se o usuário é o proprietário do veículo ou um admin
+
+        // Verificar permissões
         if (vehicle.vendedorId !== req.user.id && req.user.role !== 'ADMIN') {
-            return res.status(403).json({ message: 'Acesso negado: você não tem permissão para excluir este veículo' });
+            return res.status(403).json({ message: 'Acesso negado' });
         }
-        
-        await prisma.vehicle.delete({
-            where: { id }
-        });
-        
+
+        // Deletar em transação para garantir integridade
+        await prisma.$transaction([
+            // 1. Deletar imagens relacionadas
+            prisma.image.deleteMany({
+                where: { vehicleId: id }
+            }),
+            
+            // 2. Deletar outros relacionamentos se existirem (ex: videos, favoritos)
+            prisma.video.deleteMany({ where: { vehicleId: id } }),
+            prisma.favorito.deleteMany({ where: { vehicleId: id } }),
+            
+            // 3. Finalmente deletar o veículo
+            prisma.vehicle.delete({
+                where: { id }
+            })
+        ]);
+
         res.json({ message: 'Veículo removido com sucesso' });
     } catch (error) {
         handlePrismaError(error, res);
