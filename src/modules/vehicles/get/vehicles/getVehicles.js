@@ -3,16 +3,22 @@ const { PrismaClient, Carroceria, Categoria, Combustivel, Cambio } = require('@p
 const prisma = new PrismaClient();
 
 // Utilitário para sanitizar enums
+
 const sanitizeEnum = (value, enumType) => {
     if (!value) return undefined;
     
     try {
         const upperValue = value.toString().toUpperCase();
+        
+        // Caso especial para BUGGY
+        if (enumType === Carroceria && upperValue === "BUGGY") {
+        return "buggy";
+        }
+        
         if (Object.values(enumType).includes(upperValue)) {
         return upperValue;
         }
         
-        // Tenta encontrar por similaridade (case insensitive)
         const found = Object.values(enumType).find(
         e => e.toString().toUpperCase() === upperValue
         );
@@ -21,7 +27,6 @@ const sanitizeEnum = (value, enumType) => {
         return undefined;
     }
 };
-
 // Utilitário para sanitizar filtros numéricos
 const sanitizeNumber = (value, min, max) => {
   const num = Number(value);
