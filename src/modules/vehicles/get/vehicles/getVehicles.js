@@ -4,28 +4,30 @@ const prisma = new PrismaClient();
 
 // Utilitário para sanitizar enums
 
+
 const sanitizeEnum = (value, enumType) => {
-    if (!value) return undefined;
+  if (!value) return undefined;
+  
+  try {
+    const strValue = value.toString();
     
-    try {
-        const upperValue = value.toString().toUpperCase();
-        
-        // Caso especial para BUGGY
-        if (enumType === Carroceria && upperValue === "BUGGY") {
-        return "buggy";
-        }
-        
-        if (Object.values(enumType).includes(upperValue)) {
-        return upperValue;
-        }
-        
-        const found = Object.values(enumType).find(
-        e => e.toString().toUpperCase() === upperValue
-        );
-        return found || undefined;
-    } catch {
-        return undefined;
+    // Caso especial para Carroceria (aceita ambos "BUGGY" e "buggy")
+    if (enumType === Carroceria) {
+      if (strValue.toUpperCase() === "BUGGY") return "BUGGY";
     }
+    
+    const upperValue = strValue.toUpperCase();
+    if (Object.values(enumType).includes(upperValue)) {
+      return upperValue;
+    }
+    
+    const found = Object.values(enumType).find(
+      e => e.toString().toUpperCase() === upperValue
+    );
+    return found || undefined;
+  } catch {
+    return undefined;
+  }
 };
 // Utilitário para sanitizar filtros numéricos
 const sanitizeNumber = (value, min, max) => {
