@@ -230,8 +230,8 @@ enum Carroceria {
   PERUA
   MINIVAN
   VAN
-  BUGGY @map("buggy")
-  OFFROAD @map("offroad")
+  BUGGY
+  OFFROAD 
 }
 
 enum Categoria {

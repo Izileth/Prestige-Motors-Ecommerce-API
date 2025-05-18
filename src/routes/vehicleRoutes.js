@@ -46,6 +46,7 @@ router.get('/:id/reviews', getVehicleReviews);
 router.get('/:id/details', getVehicleDetails);
 router.get('/vendors/:vendorId', getVehiclesByVendor);
 
+
 // ================ ROTAS AUTENTICADAS ================
 
 // Rota para criação de veículo com suporte para upload de imagens
