@@ -76,11 +76,11 @@ const login = async (req, res) => {
 
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
             path: '/',
-            domain: process.env.COOKIE_DOMAIN || 'localhost'
+            domain: process.env.COOKIE_DOMAIN || 'vortex-motors-services.vercel.app'
         };
         
 

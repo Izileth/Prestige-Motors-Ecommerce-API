@@ -1,20 +1,20 @@
-const { PrismaClient, Carroceria, Categoria, Combustivel, Cambio } = require('@prisma/client');
+const { PrismaClient} = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
 // Utilitário para sanitizar enums
 
 const sanitizeEnum = (value, enumType) => {
-  if (!value) return undefined;
-  
-  // Converte para string e padroniza (ex: 'buggy' → 'BUGGY')
-  const strValue = value.toString().toUpperCase().trim();
-  
-  // Lista de valores válidos do enum (em maiúsculas)
-  const validValues = Object.values(enumType).map(v => v.toString().toUpperCase());
-  
-  // Retorna o valor sanitizado se for válido
-  return validValues.includes(strValue) ? strValue : undefined;
+    if (!value) return undefined;
+    
+    // Converte para string e padroniza (ex: 'buggy' → 'BUGGY')
+    const strValue = value.toString().toUpperCase().trim();
+    
+    // Lista de valores válidos do enum (em maiúsculas)
+    const validValues = Object.values(enumType).map(v => v.toString().toUpperCase());
+    
+    // Retorna o valor sanitizado se for válido
+    return validValues.includes(strValue) ? strValue : undefined;
 };
 
 // Utilitário para sanitizar filtros numéricos
@@ -109,19 +109,19 @@ const getVehicles = async (req, res) => {
 
         // Filtros de enum com sanitização
         if (combustivel) {
-            const sanitized = sanitizeEnum(combustivel, Combustivel);
+            const sanitized = sanitizeEnum(combustivel, combustivel);
             if (sanitized) where.tipoCombustivel = sanitized;
         }
         if (cambio) {
-            const sanitized = sanitizeEnum(cambio, Cambio);
+            const sanitized = sanitizeEnum(cambio, cambio);
             if (sanitized) where.cambio = sanitized;
         }
         if (categoria) {
-            const sanitized = sanitizeEnum(categoria, Categoria);
+            const sanitized = sanitizeEnum(categoria, categoria);
             if (sanitized) where.categoria = sanitized;
         }
         if (carroceria) {
-            const sanitized = sanitizeEnum(carroceria, Carroceria);
+            const sanitized = sanitizeEnum(carroceria, carroceria);
             if (sanitized) where.carroceria = sanitized;
         }
         

@@ -23,12 +23,14 @@ app.use(xss());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'https://vortex-motors-services.vercel.app',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Set-Cookie'] // Removi 'Authorization' pois não usaremos mais
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With',   'Cache-Control'],
+    exposedHeaders: ['Set-Cookie'], // Removi 'Authorization' pois não usaremos mais
+    optionsSuccessStatus: 200 // Para navegadores antigos
 }));
+
 app.options('*', cors()); // Habilita OPTIONS para todas as rotas
 
 app.use((req, res, next) => {
