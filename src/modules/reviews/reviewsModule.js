@@ -1,5 +1,5 @@
-const {createReview} = require('./create/createReview')
-const {getVehicleReviews} = require('./get/getVehicleReview')
+const {createReview} = require('./createReview')
+const {getVehicleReviews} = require('./getVehicleReview')
 
 module.exports = {
     createReview,

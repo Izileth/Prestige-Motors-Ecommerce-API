@@ -1,10 +1,10 @@
 
-const {getUsers} = require('./get/user/getUsers')
-const {getUserById} = require('./get/[id]/getUserById')
-const {updateUser} =  require('./updte/updateUser')
-const {deleteUser} = require('./delete/deleteUser')
-const {getUserStats} = require('./get/stats/getUserStats')
-const {getUserAddresses} = require('./get/adress/getUserAddress')
+const {getUsers} = require('./getUsers')
+const {getUserById} = require('./getUserById')
+const {updateUser} =  require('./updateUser')
+const {deleteUser} = require('./deleteUser')
+const {getUserStats} = require('./getUserStats')
+const {getUserAddresses} = require('./getUserAddress')
 
 module.exports = {
     getUsers,

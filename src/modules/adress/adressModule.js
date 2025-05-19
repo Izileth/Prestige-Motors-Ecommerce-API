@@ -1,6 +1,6 @@
-const {createAddress} = require('./create/crateAddress')
-const {updateAddress} = require('./updte/updateAdress')
-const {deleteAddress} = require('./delete/deleteAdress')
+const {createAddress} = require('./crateAddress')
+const {updateAddress} = require('./updateAdress')
+const {deleteAddress} = require('./deleteAdress')
 
 module.exports = {
     createAddress,

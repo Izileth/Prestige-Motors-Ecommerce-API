@@ -1,6 +1,6 @@
-const {registerView} = require('./create/registerView')
-const {registerVehicleView} = require('./register/registerVehicleView')
-const {getVehicleViews} = require('./get/getVehicleView')
+const {registerView} = require('./registerView')
+const {registerVehicleView} = require('./registerVehicleView')
+const {getVehicleViews} = require('./getVehicleView')
 
 module.exports = {
     registerView,

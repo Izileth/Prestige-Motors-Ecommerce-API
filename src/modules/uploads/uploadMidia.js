@@ -1,7 +1,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { uploadImages } = require('../../../services/uploadService');
+const { uploadImages } = require('../../services/uploadService');
 
 /**
  * Upload de imagens adicionais para um veículo existente

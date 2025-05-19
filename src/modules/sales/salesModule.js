@@ -1,14 +1,14 @@
 
-const {getUserSalesHistory} = require('./get/user/getUserSalesHistory')
-const {createSale} = require('./create/createSale')
-const {getSaleById} = require('./get/[id]/getSalesById')
-const {updateSale} = require('./updte/updateSales')
-const {getPurchasesByUser} = require('./get/buyers/getSalesByBuyers')
-const {getSalesBySeller} = require('./get/selers/getSalersBySeller')
+const {getUserSalesHistory} = require('./getUserSalesHistory')
+const {createSale} = require('./createSale')
+const {getSaleById} = require('./getSalesById')
+const {updateSale} = require('./updateSales')
+const {getPurchasesByUser} = require('./getSalesByBuyers')
+const {getSalesBySeller} = require('./getSalersBySeller')
 
-const {getSalesStats} = require('./get/stats/getSalesStats')
+const {getSalesStats} = require('./getSalesStats')
 
-const {getSalesByVehicle} = require('./get/vehicle/getSalesByVehile')
+const {getSalesByVehicle} = require('./getSalesByVehile')
 
 module.exports = {
     createSale,

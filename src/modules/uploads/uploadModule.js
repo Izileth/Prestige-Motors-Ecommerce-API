@@ -1,5 +1,5 @@
-const {uploadVehicleImages, uploadVehicleVideos} = require('./midia/uploadMidia')
-const {deleteVehicleImage} = require('./midia/deleteMidia')
+const {uploadVehicleImages, uploadVehicleVideos} = require('./uploadMidia')
+const {deleteVehicleImage} = require('./deleteMidia')
 
 module.exports = {
     uploadVehicleImages,

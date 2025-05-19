@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { Prisma } = require('@prisma/client');
-const { uploadImages } = require('../../../services/uploadService'); // Importe o serviço de upload
+const { uploadImages } = require('../../services/uploadService'); // Importe o serviço de upload
 
 const prisma = new PrismaClient();
 

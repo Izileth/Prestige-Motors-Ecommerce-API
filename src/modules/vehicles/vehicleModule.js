@@ -1,23 +1,25 @@
-const {getVehiclesByVendor} = require('./get/vendors/getVehicleByVendor')
-const {createVehicle} = require('./create/createVehicle')
-const {deleteVehicle} = require('./delete/deleteVehicle')
+const {getVehiclesByVendor} = require('./getVehicleByVendor')
 
-const {getVehicleFavorites} = require('./get/favorite/getVehicleFavorites')
-const {addFavoriteVehicle} = require('./favorite/addFavoriteVehicle')
-const {removeFavoriteVehicle} = require('./favorite/deleteFavoirteVehicle')
-const {getVehicleById} = require('./get/[id]/getVehicleById')
-const {getVehicleDetails} = require('./get/details/getVehicleDetails')
-const {getUserVehicleStats} = require('./get/stats/getUserVehicleStats')
-const {getUserVehicles} = require('./get/users/getUserVehicles')
-const {getUserFavorites} = require('./get/users/favorites/getUserFavorites')
+const {createVehicle} = require('./createVehicle')
+const {updateVehicle} = require('./updateVehicle')
+const {deleteVehicle} = require('./deleteVehicle')
+
+const {getVehicleFavorites} = require('./getVehicleFavorites')
+const {addFavoriteVehicle} = require('./addFavoriteVehicle')
+const {removeFavoriteVehicle} = require('./deleteFavoirteVehicle')
+const {getVehicleById} = require('./getVehicleById')
+const {getVehicleDetails} = require('./getVehicleDetails')
+const {getUserVehicleStats} = require('./getUserVehicleStats')
+const {getUserVehicles} = require('./getUserVehicles')
+const {getUserFavorites} = require('./getUserFavorites')
 
 
-const {getVehicleStats} = require('./get/stats/getVehicleStats')
-const {getVehicles} = require('./get/vehicles/getVehicles')
+const {getVehicleStats} = require('./getVehicleStats')
+const {getVehicles} = require('./getVehicles')
 
-const {updateVehicleStatus} = require('./status/updte/updateVehicleStatus')
+const {updateVehicleStatus} = require('./updateVehicleStatus')
 
-const {updateVehicle} = require('./updte/updateVehicle')
+
 
 module.exports = {
     createVehicle,

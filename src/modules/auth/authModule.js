@@ -1,9 +1,9 @@
-const {register, uploadAvatar} = require('./register/register')
-const {login} = require('./login/login')
-const {logout} = require('./logout/logout')
+const {register, uploadAvatar} = require('./register')
+const {login} = require('./login')
+const {logout} = require('./logout')
 
-const {forgotPassword} = require('./forgout/forgoutPassword')
-const {resetPassword} = require('./reset/resetPassword')
+const {forgotPassword} = require('./forgoutPassword')
+const {resetPassword} = require('./resetPassword')
 
 module.exports = {
     register,
