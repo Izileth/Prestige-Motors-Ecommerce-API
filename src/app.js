@@ -16,7 +16,7 @@ app.use(morgan('combined'));
 // 2. CORS Dinâmico
 const allowedOrigins = [
     process.env.FRONTEND_URL,
-    'http://localhost:5173'
+    'https://vortex-motors-services.vercel.app'
 ].filter(Boolean);
 
 app.use(cors({
@@ -29,7 +29,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Access-Control-Allow-Origin'],
     exposedHeaders: ['Set-Cookie']
 }));
 
