@@ -7,12 +7,12 @@ const prisma = new PrismaClient();
 const { z } = require('zod');
 
 const {
-    Combustivel,
-    Cambio,
-    Carroceria,
-    Categoria,
-    Classe,
-    StatusVeiculo
+    combustivel,
+    cambio,
+    carroceria,
+    categoria,
+    classe,
+    statusVeiculo
 } = require('@prisma/client');
 
 const vehicleSchema = z.object({
@@ -24,17 +24,17 @@ const vehicleSchema = z.object({
     precoPromocional: z.number().positive().optional(),
     descricao: z.string().optional(),
     quilometragem: z.number().positive(),
-    tipoCombustivel: z.enum(Object.values(Combustivel)),
-    cambio: z.enum(Object.values(Cambio)),
+    tipoCombustivel: z.enum(Object.values(combustivel)),
+    cambio: z.enum(Object.values(cambio)),
     cor: z.string(),
     portas: z.number().int().min(2).max(5),
     finalPlaca: z.number().int().min(0).max(9).optional(),
-    carroceria: z.enum(Object.values(Carroceria)),
+    carroceria: z.enum(Object.values(carroceria)),
     potencia: z.number().int().positive().optional(),
     motor: z.string().optional(),
-    categoria: z.enum(Object.values(Categoria)),
-    classe: z.enum(Object.values(Classe)),
-    status: z.enum(Object.values(StatusVeiculo)).default('DISPONIVEL'),
+    categoria: z.enum(Object.values(categoria)),
+    classe: z.enum(Object.values(classe)),
+    status: z.enum(Object.values(statusVeiculo)).default('DISPONIVEL'),
     destaque: z.boolean().default(false),
     seloOriginal: z.boolean().default(false),
     aceitaTroca: z.boolean().default(false),

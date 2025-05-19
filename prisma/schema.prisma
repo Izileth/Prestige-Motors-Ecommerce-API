@@ -10,12 +10,12 @@ datasource db {
 model User {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   nome                String
-  email               String  @unique  // Adicione esta linha
+  email               String      @unique // Adicione esta linha
   senha               String
   role                String      @default("USER")
   telefone            String?
   enderecos           Endereco[] // Relação one-to-many
-  cpf String?  // Sem @unique
+  cpf                 String? // Sem @unique
   dataNascimento      DateTime?
   avatar              String?
   emailVerificado     Boolean     @default(false)
@@ -29,8 +29,8 @@ model User {
   vendasComoComprador Venda[]     @relation("VendasComoComprador")
 
   // Recuperação de senha
-  resetToken          String?
-  resetTokenExpiry    DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
 }
 
 model Vehicle {
@@ -43,16 +43,16 @@ model Vehicle {
   precoPromocional      Float?
   descricao             String?
   quilometragem         Float
-  tipoCombustivel       Combustivel
-  cambio                Cambio
+  tipoCombustivel       combustivel
+  cambio                cambio
   cor                   String
   portas                Int
   finalPlaca            Int?
-  carroceria            Carroceria
+  carroceria            carroceria
   potencia              Int? // cv
   motor                 String?
-  categoria             Categoria
-  classe                Classe
+  categoria             categoria
+  classe                classe
   imagens               Image[]
   videos                Video[]
   especificacoes        Json? // Detalhes técnicos em JSON
@@ -60,7 +60,7 @@ model Vehicle {
   vendedor              User          @relation(fields: [vendedorId], references: [id])
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
-  status                StatusVeiculo @default(DISPONIVEL)
+  status                statusVeiculo @default(DISPONIVEL)
   visualizacoes         Int           @default(0)
   favoritos             Favorito[]
   visualizacoesDetalhes ViewLog[]
@@ -70,7 +70,7 @@ model Vehicle {
   seloOriginal          Boolean       @default(false)
   aceitaTroca           Boolean       @default(false)
   parcelamento          Float? // Valor da parcela exemplo
-  
+
   localizacao   Endereco? @relation(fields: [localizacaoId], references: [id])
   localizacaoId String?   @db.ObjectId // Sem @unique
 
@@ -86,7 +86,7 @@ model Vehicle {
 }
 
 model Endereco {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   cep         String
   logradouro  String
   numero      String
@@ -94,20 +94,20 @@ model Endereco {
   bairro      String
   cidade      String
   estado      String
-  pais        String   @default("Brasil")
+  pais        String    @default("Brasil")
   latitude    Float?
   longitude   Float?
-  vehicles     Vehicle[] // Múltiplos veículos podem usar o mesmo endereço
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String   @db.ObjectId // Chave estrangeira
-  createdAt   DateTime?  @default(now()) // Temporariamente nullable
-  updatedAt   DateTime @updatedAt
+  vehicles    Vehicle[] // Múltiplos veículos podem usar o mesmo endereço
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @db.ObjectId // Chave estrangeira
+  createdAt   DateTime? @default(now()) // Temporariamente nullable
+  updatedAt   DateTime  @updatedAt
 }
 
 model Favorito {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  vehicleId String
+  userId    String   @db.ObjectId // ✅ Corrigido
+  vehicleId String   @db.ObjectId // ✅ Corrigido
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
@@ -119,8 +119,8 @@ model Favorito {
 
 model ViewLog {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  vehicleId String
-  userId    String?
+  vehicleId String   @db.ObjectId // ✅ Corrigido
+  userId    String?  @db.ObjectId // ✅ Corrigido (note o "?" para campos opcionais)
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
@@ -155,34 +155,34 @@ model Video {
 
 model Avaliacao {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  vehicleId  String
-  userId     String
+  vehicleId  String   @db.ObjectId // ✅ Corrigido
+  userId     String?  @db.ObjectId // ✅ Corrigido (note o "?" para campos opcionais)
   rating     Int      @default(5) // 1-5 estrelas
   comentario String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id]) // Relação opcional
 
   @@index([vehicleId])
   @@index([userId])
 }
 
 model Venda {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  vehicleId      String     @db.ObjectId
-  vendedorId     String     @db.ObjectId
-  compradorId    String     @db.ObjectId
-  precoVenda     Float
-  formaPagamento String
-  parcelas       Int?
-  observacoes    String?
-  categoria             Categoria
-  status         String?    @default("CONCLUIDA")
-  categoriaVeiculo String?  // Novo campo
-  dataVenda      DateTime   @default(now())
-  dataCriacao    DateTime   @default(now())
-  dataAtualizacao DateTime  @updatedAt
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId        String    @db.ObjectId
+  vendedorId       String    @db.ObjectId
+  compradorId      String    @db.ObjectId
+  precoVenda       Float
+  formaPagamento   String
+  parcelas         Int?
+  observacoes      String?
+  categoria        categoria
+  status           String?   @default("CONCLUIDA")
+  categoriaVeiculo String? // Novo campo
+  dataVenda        DateTime  @default(now())
+  dataCriacao      DateTime  @default(now())
+  dataAtualizacao  DateTime  @updatedAt
 
   // Relações
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
@@ -193,17 +193,17 @@ model Venda {
   @@index([vendedorId])
   @@index([compradorId])
   @@index([dataVenda])
-  @@index([status])         // Novo índice
+  @@index([status]) // Novo índice
   @@index([categoria]) // Novo índice
 }
 
-enum VendaStatus {
+enum vendaStatus {
   PENDENTE
   CONCLUIDA
   CANCELADA
 }
 
-enum Combustivel {
+enum combustivel {
   GASOLINA
   ETANOL
   FLEX
@@ -213,14 +213,14 @@ enum Combustivel {
   GNV
 }
 
-enum Cambio {
+enum cambio {
   MANUAL
   AUTOMATICO
   SEMI_AUTOMATICO
   CVT
 }
 
-enum Carroceria {
+enum carroceria {
   HATCH
   SEDAN
   SUV
@@ -231,10 +231,10 @@ enum Carroceria {
   MINIVAN
   VAN
   BUGGY
-  OFFROAD 
+  OFFROAD
 }
 
-enum Categoria {
+enum categoria {
   HYPERCAR
   SUPERCAR
   SPORTS_CAR
@@ -254,7 +254,7 @@ enum Categoria {
   CONCEPT
 }
 
-enum Classe {
+enum classe {
   D
   C
   B
@@ -264,7 +264,7 @@ enum Classe {
   X
 }
 
-enum StatusVeiculo {
+enum statusVeiculo {
   DISPONIVEL
   RESERVADO
   VENDIDO
