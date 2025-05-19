@@ -54,11 +54,12 @@ app.use(express.json());
 // 7. Rotas
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
-app.use('/api/sales', require('./routes/salesRoutes')); // Novo
-app.use('/api/negociations', require('.'));
+app.use('/api/sales', require('./routes/salesRoutes')); 
 
-app.use('/api/metrics', require('./'));
-app.use('/api/statics', require('./')); // Novo
+// app.use('/api/negociations', require('./'));
+
+// app.use('/api/metrics', require('./'));
+// app.use('/api/statics', require('./')); 
 
 
 
