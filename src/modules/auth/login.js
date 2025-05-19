@@ -80,7 +80,7 @@ const login = async (req, res) => {
             sameSite: 'none',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
             path: '/',
-            domain: process.env.COOKIE_DOMAIN || 'vortex-motors-services.vercel.app'
+            domain: process.env.COOKIE_DOMAIN || '.vortex-motors-services.vercel.app'
         };
         
 

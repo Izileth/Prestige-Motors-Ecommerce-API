@@ -31,7 +31,6 @@ app.use(cors({
     optionsSuccessStatus: 200 // Para navegadores antigos
 }));
 
-app.options('*', cors()); // Habilita OPTIONS para todas as rotas
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Credentials', 'true');
