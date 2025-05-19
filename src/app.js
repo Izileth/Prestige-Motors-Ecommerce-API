@@ -4,82 +4,61 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const xss = require('xss-clean');
-
 const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// 1. Helmet (proteção de cabeçalhos HTTP)
+// 1. Segurança básica
 app.use(helmet());
-
-// 2. Logs de requisições com Morgan
-app.use(morgan('combined')); // Use 'dev' para logs mais simples em desenvolvimento
-
-// 3. Proteção contra XSS (Cross-Site Scripting)
 app.use(xss());
+app.use(morgan('combined'));
 
-// 4. Configuração do CORS
-
-app.use(cookieParser());
+// 2. CORS Dinâmico
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:5173'
+].filter(Boolean);
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://vortex-motors-services.vercel.app',
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        } else {
+        callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With',   'Cache-Control'],
-    exposedHeaders: ['Set-Cookie'], // Removi 'Authorization' pois não usaremos mais
-    optionsSuccessStatus: 200 // Para navegadores antigos
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control'],
+    exposedHeaders: ['Set-Cookie']
 }));
 
-
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Expose-Headers', 'Set-Cookie');
-    res.header('X-Content-Type-Options', 'nosniff');
-    res.header('X-Frame-Options', 'DENY');
-    next();
-});
-
-
-// 5. Rate Limiting (limitação de requisições)
-const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minuto
-    max: 30, // Limite de requisições por IP
-    message: 'Muitas requisições deste IP, tente novamente mais tarde.'
-});
-app.use(limiter);
-
-// 6. Middleware para parsear JSON
+// 3. Configurações adicionais
+app.use(cookieParser());
 app.use(express.json());
 
-// 7. Rotas
+// 4. Rate Limiting
+app.use(rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    message: 'Muitas requisições deste IP, tente novamente mais tarde.'
+}));
+
+// 5. Rotas
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
-app.use('/api/sales', require('./routes/salesRoutes')); 
+app.use('/api/sales', require('./routes/salesRoutes'));
 
-// app.use('/api/negociations', require('./'));
-
-// app.use('/api/metrics', require('./'));
-// app.use('/api/statics', require('./')); 
-
-
-
-//app.use('/api/avaliacoes', require('./routes/reviewRoutes')); // Novo
-
-// Rota de teste
+// 6. Rota de teste
 app.get('/api/teste', (req, res) => {
     res.json({ 
         message: 'API funcionando!',
-        endpoints: {
-            usuarios: '/api/users',
-            veiculos: '/api/vehicles',
-            vendas: '/api/sales',
-            avaliacoes: '/api/reviews'
-        }
+        environment: process.env.NODE_ENV,
+        allowedOrigins
     });
 });
-// 8. Tratamento centralizado de erros
 
+// 7. Tratamento de erros
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ 
@@ -88,7 +67,5 @@ app.use((err, req, res, next) => {
         details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
-
-
 
 module.exports = app;
