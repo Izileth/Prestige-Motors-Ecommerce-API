@@ -19,7 +19,8 @@ app.use(express.json());
 
 // 2. Configuração CORS (DEVE vir após helmet e antes das rotas)
 const allowedOrigins = [
-  'https://vortex-motors-services.vercel.app',
+  'https://vortex-motors-services.vercel.app', // Teste 1
+  'https://prestige-motors-eta.vercel.app', // Teste 2
   'http://localhost:5173' // Para desenvolvimento
 ];
 

@@ -83,7 +83,7 @@ const login = async (req, res) => {
             partitioned: true, 
             domain: process.env.NODE_ENV === 'development' 
                 ? 'localhost' 
-                : '.vortex-motors-services.vercel.app' // COM o ponto inicial
+                : '.prestige-motors-eta.vercel.app' // COM o ponto inicial
         };
         
 
@@ -91,7 +91,7 @@ const login = async (req, res) => {
         // 6. Resposta com cookie seguro
         res.cookie('token', token, cookieOptions)
         .header('Access-Control-Allow-Credentials', 'true')
-        .header('Access-Control-Allow-Origin', 'https://vortex-motors-services.vercel.app')
+        .header('Access-Control-Allow-Origin', 'https://prestige-motors-eta.vercel.app')
         .status(200)
         .json({
             success: true,
