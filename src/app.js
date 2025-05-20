@@ -30,7 +30,8 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Access-Control-Allow-Origin'],
-    exposedHeaders: ['Set-Cookie']
+    credentials: true,
+    exposedHeaders: ['Set-Cookie', 'Authorization'],
 }));
 
 // 3. Configurações adicionais
