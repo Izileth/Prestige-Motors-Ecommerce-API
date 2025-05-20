@@ -13,6 +13,13 @@ app.use(helmet());
 app.use(xss());
 app.use(morgan('combined'));
 
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Private-Network', 'true');
+    res.header('Permissions-Policy', 'interest-cohort=()');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+});
+
 // 2. CORS Dinâmico
 const allowedOrigins = [
     process.env.FRONTEND_URL,
