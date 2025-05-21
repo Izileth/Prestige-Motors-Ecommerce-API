@@ -2,19 +2,12 @@ const { PrismaClient } = require('@prisma/client');
 const { Prisma } = require('@prisma/client');
 const { uploadImages } = require('../../services/uploadService'); // Importe o serviço de upload
 
+const {combustivel, cambio, carroceria, categoria, classe, statusVeiculo} = require('@prisma/client')
 const prisma = new PrismaClient();
 
 const { z } = require('zod');
 
-const combustivelValues = Object.values(Prisma.combustivel);
-const cambioValues = Object.values(Prisma.cambio);
-const carroceriaValues = Object.values(Prisma.carroceria);
-const categoriaValues = Object.values(Prisma.categoria);
-const classeValues = Object.values(Prisma.classe);
-const statusVeiculoValues = Object.values(Prisma.statusVeiculo);
-
-
-const vehicleSchema = z.object({
+const vehicleSchema = z.object({     
     marca: z.string(),
     modelo: z.string(),
     anoFabricacao: z.number().int(),
@@ -23,20 +16,17 @@ const vehicleSchema = z.object({
     precoPromocional: z.number().positive().optional(),
     descricao: z.string().optional(),
     quilometragem: z.number().positive(),
-
-    tipoCombustivel: z.enum(combustivelValues),
-    cambio: z.enum(cambioValues),
-    carroceria: z.enum(carroceriaValues),
-    categoria: z.enum(categoriaValues),
-    classe: z.enum(classeValues),
-    status: z.enum(statusVeiculoValues).default('DISPONIVEL'),
+    tipoCombustivel: z.enum(Object.values(combustivel)),
+    cambio: z.enum(Object.values(cambio)),
     cor: z.string(),
     portas: z.number().int().min(2).max(5),
     finalPlaca: z.number().int().min(0).max(9).optional(),
-
+    carroceria: z.enum(Object.values(carroceria)),
     potencia: z.number().int().positive().optional(),
     motor: z.string().optional(),
-
+    categoria: z.enum(Object.values(categoria)),
+    classe: z.enum(Object.values(classe)),
+    status: z.enum(Object.values(statusVeiculo)).default('DISPONIVEL'),
     destaque: z.boolean().default(false),
     seloOriginal: z.boolean().default(false),
     aceitaTroca: z.boolean().default(false),
@@ -47,7 +37,7 @@ const vehicleSchema = z.object({
         isMain: z.boolean().optional(),
         ordem: z.number().optional()
     })).optional(),
-    videos: z.array(z.string().url()).optional()
+    videos: z.array(z.string().url()).optional(),
 });
 
 const handlePrismaError = (error, res) => {
