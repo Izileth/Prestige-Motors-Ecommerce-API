@@ -4,10 +4,11 @@ const prisma = new PrismaClient();
 
 const authenticate = async (req, res, next) => {
 
-    console.log('Headers:', req.headers);
-    console.log('Cookies raw:', req.headers.cookie); // Verifica se o cookie chega cru
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Cookies raw:', req.headers.cookie);
     console.log('Parsed cookies:', req.cookies); // Deve mostrar o token após cookieParser
 
+    
     try {
         // 1. Verificar o cookie (não mais o header Authorization)
         const tokenFromCookie = req.cookies?.token;

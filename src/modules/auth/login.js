@@ -1,12 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
 const prisma = new PrismaClient();
 
 const login = async (req, res) => {
     try {
-
         if (!req.body || typeof req.body !== 'object') {
             return res.status(400).json({
                 success: false,
@@ -25,7 +23,6 @@ const login = async (req, res) => {
             });
         }
         
-
         // 2. Busca o usuário com tratamento case-insensitive
         const user = await prisma.user.findUnique({
             where: { 
@@ -59,55 +56,49 @@ const login = async (req, res) => {
                 message: 'Credenciais inválidas'
             });
         }
-
         
-
         // 5. Geração de token
-
         const token = jwt.sign(
             { 
-            id: user.id,
-            role: user.role 
+                id: user.id,
+                role: user.role 
             }, 
             process.env.JWT_SECRET, 
-            { expiresIn: '1d' } // Aumentei para 7 dias
+            { expiresIn: '1d' }
         );
 
-
+        // 6. Configuração de cookie para cross-origin seguro
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // true em produção
+            secure: process.env.NODE_ENV !== 'development', // true em produção/staging
             sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            path: '/',
-            partitioned: true, 
-            domain: process.env.NODE_ENV === 'development' 
-                ? 'localhost' 
-                : '.prestige-motors-eta.vercel.app' // COM o ponto inicial
+            maxAge: 24 * 60 * 60 * 1000, // 1 dia em milissegundos
+            path: '/'
         };
         
-
-
-        // 6. Resposta com cookie seguro
-        res.cookie('token', token, cookieOptions)
-        .header('Access-Control-Allow-Credentials', 'true')
-        .header('Access-Control-Allow-Origin', 'https://prestige-motors-eta.vercel.app')
-        .status(200)
-        .json({
-            success: true,
-            user: {
-                id: user.id,
-                nome: user.nome,
-                email: user.email,
-                role: user.role
-            }
-        });
-
-
+        // 7. Log dos detalhes para debug
+        console.log('Login bem sucedido para:', user.email);
+        console.log('Cookie options:', cookieOptions);
+        console.log('NODE_ENV:', process.env.NODE_ENV);
+        
+        // 8. Resposta com cookie e token no corpo
+        return res
+            .cookie('token', token, cookieOptions)
+            .status(200)
+            .json({
+                success: true,
+                token, // Inclui o token na resposta para estratégia alternativa
+                user: {
+                    id: user.id,
+                    nome: user.nome,
+                    email: user.email,
+                    role: user.role
+                }
+            });
     } catch (error) {
         console.error('Login error:', error);
         
-        // 7. Tratamento de erros específico para JWT
+        // 9. Tratamento de erros específico para JWT
         if (error instanceof jwt.JsonWebTokenError) {
             return res.status(500).json({
                 success: false,
@@ -119,7 +110,9 @@ const login = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'server_error',
-            message: 'Erro interno no servidor'
+            message: process.env.NODE_ENV === 'development' 
+                ? error.message 
+                : 'Erro interno no servidor'
         });
     }
 };

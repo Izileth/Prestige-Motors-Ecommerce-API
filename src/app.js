@@ -25,15 +25,27 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function(origin, callback) {
+    // Permitir requisições sem origin (como apps mobile ou curl)
+    if (!origin) return callback(null, true);
+    
+    // Verificar se a origem está na lista de permitidos
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado pelo CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
     'X-Requested-With',
     'Accept',
-    'Cache-Control'
+    'Cache-Control',
+    'Cookie',
+    'Set-Cookie'
   ],
   exposedHeaders: ['Set-Cookie', 'Authorization'],
   optionsSuccessStatus: 200
@@ -41,9 +53,15 @@ app.use(cors({
 
 // 3. Middleware personalizado para headers adicionais (OPCIONAL)
 app.use((req, res, next) => {
-  // Headers adicionais que não conflitam com CORS
   res.header('Permissions-Policy', 'interest-cohort=()');
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Expose-Headers', 'Set-Cookie, Authorization');
+  
+  // Certificar-se de que o Preflight OPTIONS funcione corretamente
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   next();
 });
 
