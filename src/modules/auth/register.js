@@ -145,16 +145,30 @@ const register = async (req, res) => {
         }
 
         // Criação do usuário com tratamento de erros específico
-             
+
+        const newUser = await prisma.user.create({
+            data: userData,
+            include: {
+                enderecos: Boolean(endereco)
+            }
+        });
+
+        // Verificação crítica de segurança
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET não definido no ambiente');
+        }
+
+        // Geração do token após criação bem-sucedida
         const token = jwt.sign(
             { 
-                id: user.id,
-                role: user.role 
+                id: newUser.id,
+                role: newUser.role 
             }, 
             process.env.JWT_SECRET, 
             { expiresIn: '1d' }
         );
-        
+
+        // Configuração do cookie
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
@@ -162,27 +176,19 @@ const register = async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000,
             path: '/'
         };
-        const user = await prisma.user.create({
-            data: userData,
-            include: {
-                enderecos: Boolean(endereco)
+        return res
+        .cookie('token', token, cookieOptions)
+        .status(201)
+        .json({
+            success: true,
+            token,
+            user: {
+                id: newUser.id,
+                nome: newUser.nome,
+                email: newUser.email,
+                role: newUser.role
             }
         });
- 
-        return res
-            .cookie('token', token, cookieOptions)
-            .status(201)
-            .json({
-                success: true,
-                token,
-                user: {
-                    id: user.id,
-                    nome: user.nome,
-                    email: user.email,
-                    role: user.role
-                }
-            });
-  
    
 
     } // Substitua o bloco catch atual por:
