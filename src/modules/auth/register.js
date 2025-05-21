@@ -145,18 +145,45 @@ const register = async (req, res) => {
         }
 
         // Criação do usuário com tratamento de erros específico
+             
+        const token = jwt.sign(
+            { 
+                id: user.id,
+                role: user.role 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '1d' }
+        );
+        
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
+        };
         const user = await prisma.user.create({
             data: userData,
             include: {
                 enderecos: Boolean(endereco)
             }
         });
-
-        return res.status(201).json({
-            success: true,
-            userId: user.id,
-            hasAddress: Boolean(user.enderecos?.length)
-        });
+ 
+        return res
+            .cookie('token', token, cookieOptions)
+            .status(201)
+            .json({
+                success: true,
+                token,
+                user: {
+                    id: user.id,
+                    nome: user.nome,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+  
+   
 
     } // Substitua o bloco catch atual por:
     catch (error) {
