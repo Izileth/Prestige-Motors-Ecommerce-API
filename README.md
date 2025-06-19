@@ -5,12 +5,12 @@ Welcome to Prestige Motors API!
 The Project of API development for Prestige Motors Platform
 
 
-# 📚 Índice
+# Índice
 
 - [Getting Started](#getting-started)
 - [Building For Development](#building-for-development)
-- [Access Routes](#access-routes)
-  - [Test](#test)
+- [ 🌐 Access Routes](#access-routes)
+  - [🧪 Test](#test)
   - [Access Routes – Data & Options](#access-routes--data--options)
 - [🔐 Auth Access](#-auth-access)
   - [Access Auth Routes – Public](#access-auth-routes--public)
@@ -42,9 +42,10 @@ npm nodemon server.js
 
 
 
-## Access Routes
+## 🌐 Access Routes
 
-### Test
+### 🧪 Test
+
 
 - Access the test route:  
   `GET {url}/api/test`
@@ -160,3 +161,37 @@ npm nodemon server.js
 | `/api/sales/:userId/stats`                      | `GET`    | Obter estatísticas de vendas de um usuário            |
 | `/api/sales/buyers/:userId`                     | `GET`    | Listar compras feitas por um usuário como comprador   |
 | `/api/sales/sellers/:userId`                    | `GET`    | Listar vendas feitas por um usuário como vendedor     |
+
+
+
+### 🔐 Autenticação e Autorização
+
+**Rotas Públicas**
+- Não requerem autenticação  
+- Acessíveis a qualquer cliente  
+
+**Rotas Privadas**
+- Requerem token de autenticação válido  
+- Headers obrigatórios configurados  
+- Políticas CORS aplicadas  
+
+---
+
+### 📝 Notas Importantes
+
+- **Prefixo Base:** Todas as rotas utilizam o prefixo `/api/`  
+- **Autenticação:** Rotas privadas requerem headers de autenticação apropriados  & Cookies de Proxys Autorizados
+- **CORS:** Configurado para rotas que necessitam de acesso cross-origin  
+- **Parâmetros Dinâmicos:** `:Id`, `::vendorId`, `:userId`, `:addressId`  
+
+---
+
+### ⚙️ Tecnologias
+
+- Node.js  
+- Express.js  
+- Nodemon (desenvolvimento)  
+
+---
+
+Desenvolvido com ❤️ para a API **Prestige Motors**
