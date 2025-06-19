@@ -78,9 +78,14 @@ app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 
 // 6. Rota de teste
-app.get('/api/teste', (req, res) => {
+app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'API funcionando!',
+    message: 'API Working Correctly!',
+    endpoints: {
+      users: '/api/users',
+      vehciles: '/api/vehicles',
+      sales: '/api/sales'
+    },  
     environment: process.env.NODE_ENV,
     allowedOrigins
   });
