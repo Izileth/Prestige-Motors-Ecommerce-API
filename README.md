@@ -4,27 +4,6 @@ Welcome to Prestige Motors API!
 
 The Project of API development for Prestige Motors Platform
 
-
-# Índice
-
-- [Getting Started](#getting-started)
-- [Building For Development](#building-for-development)
-- [ 🌐 Access Routes](#access-routes)
-  - [🧪 Test](#test)
-  - [Access Routes – Data & Options](#access-routes--data--options)
-- [🔐 Auth Access](#-auth-access)
-  - [Access Auth Routes – Public](#access-auth-routes--public)
-  - [Access Auth Routes – Private](#access-auth-routes--private)
-- [👤 User Access](#-user-access)
-  - [Access User Routes – Private](#access-user-routes--private)
-  - [Access User Address Data – Private](#access-user-address-data--private)
-- [🚗 Vehicle Access](#-vehicle-access)
-  - [Access Vehicle Information & Data – Public](#access-vehicle-information--data--public)
-  - [Access Vehicle Information & Data – Private](#access-vehicle-information--data--private)
-- [💼 Negotiations & Sales Access](#-negotiations--sales-access)
-  - [Access Sales Information & Data – Private](#access-sales-information--data--private)
-
-
 # Getting Started
 
 To run this application:
