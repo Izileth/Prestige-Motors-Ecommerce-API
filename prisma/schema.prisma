@@ -14,7 +14,7 @@ model User {
   senha               String
   role                String      @default("USER")
   telefone            String?
-  enderecos           Endereco[] // Relação one-to-many
+  enderecos           Address[] // Relação one-to-many
   cpf                 String? // Sem @unique
   dataNascimento      DateTime?
   avatar              String?
@@ -22,11 +22,17 @@ model User {
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   vehicles            Vehicle[]
-  veiculosFavoritos   Favorito[]
+  veiculosFavoritos   Favorites[]
   visualizacoes       ViewLog[]
-  avaliacoes          Avaliacao[]
-  vendasComoVendedor  Venda[]     @relation("VendasComoVendedor")
-  vendasComoComprador Venda[]     @relation("VendasComoComprador")
+  avaliacoes          Review[]
+  vendasComoVendedor  Sale[]     @relation("VendasComoVendedor")
+  vendasComoComprador Sale[]     @relation("VendasComoComprador")
+  
+  negociacoesComoComprador Negociations[] @relation("NegociacoesComoComprador")
+  negociacoesComoVendedor  Negociations[] @relation("NegociacoesComoVendedor")
+  taxaAceitacao            Float?      
+  
+  mensagens Mensage[]
 
   // Recuperação de senha
   resetToken       String?
@@ -62,17 +68,20 @@ model Vehicle {
   updatedAt             DateTime      @updatedAt
   status                statusVeiculo @default(DISPONIVEL)
   visualizacoes         Int           @default(0)
-  favoritos             Favorito[]
+  favoritos             Favorites[]
   visualizacoesDetalhes ViewLog[]
-  avaliacoes            Avaliacao[]
-  vendas                Venda[]
+  avaliacoes            Review[]
+  vendas                Sale[]
   destaque              Boolean       @default(false)
   seloOriginal          Boolean       @default(false)
   aceitaTroca           Boolean       @default(false)
   parcelamento          Float? // Valor da parcela exemplo
 
-  localizacao   Endereco? @relation(fields: [localizacaoId], references: [id])
+  localizacao   Address? @relation(fields: [localizacaoId], references: [id])
   localizacaoId String?   @db.ObjectId // Sem @unique
+  
+  aceitaNegociacao  Boolean     @default(true) // Novo campo
+  negociacoes Negociations[]
 
   @@index([marca])
   @@index([modelo])
@@ -85,7 +94,7 @@ model Vehicle {
   @@index([destaque])
 }
 
-model Endereco {
+model Address {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   cep         String
   logradouro  String
@@ -104,10 +113,10 @@ model Endereco {
   updatedAt   DateTime  @updatedAt
 }
 
-model Favorito {
+model Favorites {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId // ✅ Corrigido
-  vehicleId String   @db.ObjectId // ✅ Corrigido
+  userId    String   @db.ObjectId 
+  vehicleId String   @db.ObjectId 
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
@@ -153,7 +162,7 @@ model Video {
   @@index([vehicleId])
 }
 
-model Avaliacao {
+model Review {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   vehicleId  String   @db.ObjectId // ✅ Corrigido
   userId     String?  @db.ObjectId // ✅ Corrigido (note o "?" para campos opcionais)
@@ -168,7 +177,37 @@ model Avaliacao {
   @@index([userId])
 }
 
-model Venda {
+
+model Negociations{
+  id                String       @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId         String       @db.ObjectId
+  compradorId       String       @db.ObjectId
+  vendedorId        String       @db.ObjectId
+  status            statusNegociacao @default(ABERTA)
+  precoSolicitado   Float        // Preço original do veículo
+  precoOfertado     Float        // Oferta do comprador
+  precoNegociado    Float?       // Preço acordado (quando fechado)
+  mensagens         Mensage[]   // Histórico de mensagens
+  dataExpiracao     DateTime?    // Prazo para resposta
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  motivoRecusa      String?
+  dataFechamento    DateTime?
+  
+  // Relações
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  comprador User     @relation("NegociacoesComoComprador", fields: [compradorId], references: [id])
+  vendedor  User     @relation("NegociacoesComoVendedor", fields: [vendedorId], references: [id])
+
+  @@index([vehicleId])
+  @@index([compradorId])
+  @@index([vendedorId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+
+model Sale {
   id               String    @id @default(auto()) @map("_id") @db.ObjectId
   vehicleId        String    @db.ObjectId
   vendedorId       String    @db.ObjectId
@@ -195,6 +234,23 @@ model Venda {
   @@index([dataVenda])
   @@index([status]) // Novo índice
   @@index([categoria]) // Novo índice
+}
+
+model Mensage {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  negociacaoId String      @db.ObjectId
+  autorId      String      @db.ObjectId
+  conteudo     String
+  tipo         tipoMensagem @default(TEXTO)
+  anexoUrl     String?
+  createdAt    DateTime    @default(now())
+  
+  // Relações
+  negociacao Negociations @relation(fields: [negociacaoId], references: [id])
+  autor      User       @relation(fields: [autorId], references: [id])
+
+  @@index([negociacaoId])
+  @@index([autorId])
 }
 
 enum vendaStatus {
@@ -269,4 +325,23 @@ enum statusVeiculo {
   RESERVADO
   VENDIDO
   INDISPONIVEL
+}
+
+
+enum statusNegociacao {
+  ABERTA
+  CONTRA_OFERTA
+  ACEITA
+  RECUSADA
+  EXPIRADA
+  CANCELADA
+  FINALIZADA
+}
+
+enum tipoMensagem {
+  TEXTO
+  OFERTA
+  CONTRA_OFERTA
+  ANEXO
+  SISTEMA
 }

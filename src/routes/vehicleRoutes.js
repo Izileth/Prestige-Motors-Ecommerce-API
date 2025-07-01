@@ -5,6 +5,8 @@ const router = express.Router();
 const {
     createReview,
     getVehicleReviews,
+    updateReview,
+    deleteReview
 } = require('../modules/reviews/reviewsModule');
 
 const {
@@ -105,6 +107,8 @@ router.put('/:id',
 );
 
 router.put('/:id/status', authenticate, authorize(['USER', 'ADMIN']), updateVehicleStatus);
+router.put('/reviews/:reviewId', authenticate, authorize(['USER', 'ADMIN']), updateReview);
+router.delete('/reviews/:reviewId', authenticate,  authorize(['USER', 'ADMIN']), deleteReview);
 router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
 router.delete('/:id/favorites', authenticate, removeFavoriteVehicle);
 
