@@ -76,6 +76,7 @@ app.use(rateLimit({
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
+app.use('/api/negotiations', require('./routes/negociationRoutes'));
 
 // 6. Rota de teste
 app.get('/api/test', (req, res) => {

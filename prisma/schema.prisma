@@ -32,6 +32,8 @@ model User {
   negociacoesComoVendedor  Negociations[] @relation("NegociacoesComoVendedor")
   taxaAceitacao            Float?      
   
+  negociacoesHistorico NegociatonsHistory[]
+  
   mensagens Mensage[]
 
   // Recuperação de senha
@@ -194,10 +196,14 @@ model Negociations{
   motivoRecusa      String?
   dataFechamento    DateTime?
   
+  historico NegociatonsHistory[] 
+  
   // Relações
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
   comprador User     @relation("NegociacoesComoComprador", fields: [compradorId], references: [id])
   vendedor  User     @relation("NegociacoesComoVendedor", fields: [vendedorId], references: [id])
+
+  tempoMedioResposta Int?        // Em minutos (calculado automaticamente)
 
   @@index([vehicleId])
   @@index([compradorId])
@@ -251,6 +257,22 @@ model Mensage {
 
   @@index([negociacaoId])
   @@index([autorId])
+}
+
+model NegociatonsHistory {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  negociacaoId   String      @db.ObjectId
+  acao           String      // "CRIACAO", "MENSAGEM", "RESPOSTA", "CANCELAMENTO", etc.
+  detalhes       Json?       // Dados adicionais em JSON
+  usuarioId      String      @db.ObjectId
+  createdAt      DateTime    @default(now())
+
+  negociacao Negociations @relation(fields: [negociacaoId], references: [id])
+  usuario    User         @relation(fields: [usuarioId], references: [id])
+
+  @@index([negociacaoId])
+  @@index([usuarioId])
+  @@index([createdAt])
 }
 
 enum vendaStatus {
