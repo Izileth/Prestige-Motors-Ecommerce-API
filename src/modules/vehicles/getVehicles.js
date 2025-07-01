@@ -2,19 +2,130 @@ const { PrismaClient} = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-// Utilitário para sanitizar enums
+
+const ENUM_MAPPINGS = {
+    combustivel: {
+        'gasolina': 'GASOLINA',
+        'etanol': 'ETANOL',
+        'flex': 'FLEX',
+        'diesel': 'DIESEL',
+        'elétrico': 'ELETRICO',
+        'eletrico': 'ELETRICO',
+        'híbrido': 'HIBRIDO',
+        'hibrido': 'HIBRIDO',
+        'gnv': 'GNV'
+    },
+    cambio: {
+        'manual': 'MANUAL',
+        'automático': 'AUTOMATICO',
+        'automatico': 'AUTOMATICO',
+        'semi-automático': 'SEMI_AUTOMATICO',
+        'semi automatico': 'SEMI_AUTOMATICO',
+        'semiautomatico': 'SEMI_AUTOMATICO',
+        'cvt': 'CVT'
+    },
+    carroceria: {
+        'hatch': 'HATCH',
+        'sedã': 'SEDAN',
+        'sedan': 'SEDAN',
+        'suv': 'SUV',
+        'picape': 'PICAPE',
+        'coupé': 'COUPE',
+        'coupe': 'COUPE',
+        'conversível': 'CONVERSIVEL',
+        'conversivel': 'CONVERSIVEL',
+        'perua': 'PERUA',
+        'minivan': 'MINIVAN',
+        'van': 'VAN',
+        'buggy': 'BUGGY',
+        'offroad': 'OFFROAD'
+    },
+    categoria: {
+        'hyper car': 'HYPERCAR',
+        'hipercarro': 'HYPERCAR',
+        'supercar': 'SUPERCAR',
+        'super car': 'SUPERCAR',
+        'supercarro': 'SUPERCAR',
+        'esportivo': 'SPORTS_CAR',
+        'esporte': 'SPORTS_CAR',
+        'sports': 'SPORTS_CAR',
+        'sports car': 'SPORTS_CAR',
+        'carro esportivo': 'SPORTS_CAR',
+        'muscle classico': 'CLASSIC_MUSCLE',
+        'muscle clássico': 'CLASSIC_MUSCLE',
+        'muscle': 'CLASSIC_MUSCLE',
+        'muscle car': 'CLASSIC_MUSCLE',
+        'carro muscle': 'CLASSIC_MUSCLE',
+        'muscle moderno': 'MODERN_MUSCLE',
+        'modern muscle': 'MODERN_MUSCLE',
+        'retro super': 'RETRO_SUPER',
+        'retro': 'RETRO_SUPER',
+        'super retro': 'RETRO_SUPER',
+        'drift': 'DRIFT_CAR',
+        'drift car': 'DRIFT_CAR',
+        'carro drift': 'DRIFT_CAR',
+        'track toy': 'TRACK_TOY',
+        'brinquedo pista': 'TRACK_TOY',
+        'offroad': 'OFFROAD',
+        'fora de estrada': 'OFFROAD',
+        '4x4': 'OFFROAD',
+        'buggy': 'BUGGY',
+        'pickup 4x4': 'PICKUP_4X4',
+        'picape 4x4': 'PICKUP_4X4',
+        'caminhonete': 'PICKUP_4X4',
+        'suv': 'SUV',
+        'utilitaire': 'SUV',
+        'hot hatch': 'HOT_HATCH',
+        'hatch esportivo': 'HOT_HATCH',
+        'hatch quente': 'HOT_HATCH',
+        'saloon': 'SALOON',
+        'sedan': 'SALOON',
+        'sedã': 'SALOON',
+        'gt': 'GT',
+        'grand tourer': 'GT',
+        'gran turismo': 'GT',
+        'rally': 'RALLY',
+        'rali': 'RALLY',
+        'concept': 'CONCEPT',
+        'conceito': 'CONCEPT',
+        'carro conceito': 'CONCEPT',
+        
+        // Adicionando variações em português
+        'hipercarro': 'HYPERCAR',
+        'superesportivo': 'SPORTS_CAR',
+        'carro de corrida': 'TRACK_TOY',
+        'brinquedo de pista': 'TRACK_TOY',
+        'caminhonete 4x4': 'PICKUP_4X4',
+        'utilitário esportivo': 'SUV',
+        'hatchback': 'HOT_HATCH',
+        'cupê': 'COUPE',
+        'perua': 'PERUA',
+        'station wagon': 'PERUA',
+        'minivan': 'MINIVAN',
+        'van': 'VAN'
+    }
+};
+
+
 
 const sanitizeEnum = (value, enumType) => {
     if (!value) return undefined;
     
-    // Converte para string e padroniza (ex: 'buggy' → 'BUGGY')
-    const strValue = value.toString().toUpperCase().trim();
+    const input = value.toString().trim().toLowerCase();
     
-    // Lista de valores válidos do enum (em maiúsculas)
-    const validValues = Object.values(enumType).map(v => v.toString().toUpperCase());
+    // Verifica nos mapeamentos primeiro
+    for (const [key, mappings] of Object.entries(ENUM_MAPPINGS)) {
+        if (mappings[input] && mappings[input] === enumType[mappings[input]]) {
+        return mappings[input];
+        }
+    }
     
-    // Retorna o valor sanitizado se for válido
-    return validValues.includes(strValue) ? strValue : undefined;
+    // Se não encontrou no mapeamento, tenta diretamente
+    const directMatch = Object.values(enumType).find(
+        v => v.toString().toLowerCase() === input
+    );
+    
+    return directMatch || undefined;
 };
 
 // Utilitário para sanitizar filtros numéricos
@@ -22,6 +133,7 @@ const sanitizeNumber = (value, min, max) => {
   const num = Number(value);
   return isNaN(num) ? undefined : Math.max(min, Math.min(max, num));
 };
+
 
 const getVehicles = async (req, res) => {
     try {
@@ -109,21 +221,69 @@ const getVehicles = async (req, res) => {
 
         // Filtros de enum com sanitização
         if (combustivel) {
-            const sanitized = sanitizeEnum(combustivel, combustivel);
-            if (sanitized) where.tipoCombustivel = sanitized;
+            where.tipoCombustivel = sanitizeEnum(combustivel, {
+                GASOLINA: 'GASOLINA',
+                ETANOL: 'ETANOL',
+                FLEX: 'FLEX',
+                DIESEL: 'DIESEL',
+                ELETRICO: 'ELETRICO',
+                HIBRIDO: 'HIBRIDO',
+                GNV: 'GNV'
+            });
         }
+
         if (cambio) {
-            const sanitized = sanitizeEnum(cambio, cambio);
-            if (sanitized) where.cambio = sanitized;
+            where.cambio = sanitizeEnum(cambio, {
+                MANUAL: 'MANUAL',
+                AUTOMATICO: 'AUTOMATICO',
+                SEMI_AUTOMATICO: 'SEMI_AUTOMATICO',
+                CVT: 'CVT'
+            });
         }
-        if (categoria) {
-            const sanitized = sanitizeEnum(categoria, categoria);
-            if (sanitized) where.categoria = sanitized;
-        }
+
         if (carroceria) {
-            const sanitized = sanitizeEnum(carroceria, carroceria);
-            if (sanitized) where.carroceria = sanitized;
+            where.carroceria = sanitizeEnum(carroceria, {
+                HATCH: 'HATCH',
+                SEDAN: 'SEDAN',
+                SUV: 'SUV',
+                PICAPE: 'PICAPE',
+                COUPE: 'COUPE',
+                CONVERSIVEL: 'CONVERSIVEL',
+                PERUA: 'PERUA',
+                MINIVAN: 'MINIVAN',
+                VAN: 'VAN',
+                BUGGY: 'BUGGY',
+                OFFROAD: 'OFFROAD'
+            });
         }
+
+        if (categoria) {
+            where.categoria = sanitizeEnum(categoria, {
+                HYPERCAR: 'HYPERCAR',
+                SUPERCAR: 'SUPERCAR',
+                SPORTS_CAR: 'SPORTS_CAR',
+                CLASSIC_MUSCLE: 'CLASSIC_MUSCLE',
+                MODERN_MUSCLE: 'MODERN_MUSCLE',
+                RETRO_SUPER: 'RETRO_SUPER',
+                DRIFT_CAR: 'DRIFT_CAR',
+                TRACK_TOY: 'TRACK_TOY',
+                OFFROAD: 'OFFROAD',
+                BUGGY: 'BUGGY',
+                PICKUP_4X4: 'PICKUP_4X4',
+                SUV: 'SUV',
+                HOT_HATCH: 'HOT_HATCH',
+                SALOON: 'SALOON',
+                GT: 'GT',
+                RALLY: 'RALLY',
+                CONCEPT: 'CONCEPT'
+            });
+        }
+
+        console.log('Filtro combustivel:', combustivel, '->', where.tipoCombustivel);
+        console.log('Filtro cambio:', cambio, '->', where.cambio);
+        console.log('Filtro carroceria:', carroceria, '->', where.carroceria);
+        console.log('Filtro categoria:', categoria, '->', where.categoria);
+
         
         // Filtro booleano
         if (destaque !== undefined) {
@@ -225,7 +385,10 @@ const getVehicles = async (req, res) => {
             ...(process.env.NODE_ENV === 'development' && { error: error.message })
         });
     }
+
+    
 };
+
 
 module.exports = {
     getVehicles
