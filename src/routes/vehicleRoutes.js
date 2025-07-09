@@ -25,6 +25,9 @@ const {
     updateVehicle,
     updateVehicleStatus,
     deleteVehicle,
+    getVehicleAddress,
+    addOrUpdateVehicleAddress,
+    removeVehicleAddress
 } = require('../modules/vehicles/vehicleModule');
 
 const {uploadVehicleImages,deleteVehicleImage, uploadVehicleVideos} = require('../modules/uploads/uploadModule')
@@ -47,6 +50,7 @@ router.get('/:id', getVehicleById);
 router.get('/:id/reviews', getVehicleReviews);
 router.get('/:id/details', getVehicleDetails);
 router.get('/vendors/:vendorId', getVehiclesByVendor);
+router.get('/:vehicleId/address', getVehicleAddress);
 
 
 // ================ ROTAS AUTENTICADAS ================
@@ -91,6 +95,9 @@ router.post('/:id/views', registerView);
 router.post('/:id/favorites', authenticate, addFavoriteVehicle);
 router.post('/:id/reviews', authenticate, createReview);
 
+router.post('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
+
+
 // ================ ROTAS DO USUÁRIO ATUAL ================
 router.get('/me/vehicles', authenticate, getUserVehicles);
 router.get('/me/views', authenticate, getVehicleViews);
@@ -108,7 +115,9 @@ router.put('/:id',
 
 router.put('/:id/status', authenticate, authorize(['USER', 'ADMIN']), updateVehicleStatus);
 router.put('/reviews/:reviewId', authenticate, authorize(['USER', 'ADMIN']), updateReview);
+router.put('/:vehicleId/address/:addressId', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
 router.delete('/reviews/:reviewId', authenticate,  authorize(['USER', 'ADMIN']), deleteReview);
+router.delete('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), removeVehicleAddress);
 router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
 router.delete('/:id/favorites', authenticate, removeFavoriteVehicle);
 

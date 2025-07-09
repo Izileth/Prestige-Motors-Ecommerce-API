@@ -102,7 +102,7 @@ const getUserVehicleStats = async (req, res) => {
             }),
             
             // Total de favoritos
-            prisma.favorito.count({
+            prisma.favorites.count({
                 where: {
                     vehicle: {
                         vendedorId: userId

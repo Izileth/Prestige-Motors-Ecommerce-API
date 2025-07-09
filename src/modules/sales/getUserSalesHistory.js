@@ -10,7 +10,7 @@ const getUserSalesHistory = async (req, res) => {
             return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
-        const sales = await prisma.venda.findMany({
+        const sales = await prisma.sale.findMany({
             where: { vendedorId: userId },
             include: {
                 vehicle: { select: { marca: true, modelo: true, anoFabricacao: true } },

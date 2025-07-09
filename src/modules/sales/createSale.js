@@ -2,12 +2,15 @@ const { PrismaClient } = require('@prisma/client');
 const { z } = require('zod');
 
 const prisma = new PrismaClient();
+const { categoria} = require('@prisma/client')
+
 
 const saleSchema = z.object({
     vehicleId: z.string(),
     compradorId: z.string(),
     precoVenda: z.number().positive(),
     formaPagamento: z.string(),
+    categoria: z.enum(Object.values(categoria)),
     parcelas: z.number().int().positive().optional(),
     observacoes: z.string().optional()
 });
@@ -27,7 +30,7 @@ const createSale = async (req, res) => {
         }
         
         const sale = await prisma.$transaction([
-        prisma.venda.create({
+        prisma.sale.create({
             data: {
             ...data,
             vendedorId: req.user.id

@@ -5,7 +5,7 @@ const getSaleById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const sale = await prisma.venda.findUnique({
+        const sale = await prisma.sale.findUnique({
         where: { id },
         include: {
             vehicle: {

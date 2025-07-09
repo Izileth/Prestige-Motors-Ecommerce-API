@@ -21,7 +21,7 @@ const { authenticate, authorize } = require('../middleware/authMiddleware');
 router.get('/stats', authenticate, authorize(['USER', 'ADMIN']), getSalesStats);
 router.post('/', authenticate, authorize(['USER', 'ADMIN']), createSale);
 router.get('/:id', authenticate, getSaleById);
-router.put('/:id', authenticate, authorize(['ADMIN']), updateSale);
+router.put('/:id', authenticate, authorize(['ADMIN', 'USER']), updateSale);
 
 // Históricos
 router.get('/vehicles/:vehicleId', authenticate, getSalesByVehicle);

@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 const getSalesStats = async (req, res) => {
     try {
         // 1. Estatísticas básicas
-        const totalSales = await prisma.venda.count();
-        const revenueStats = await prisma.venda.aggregate({
+        const totalSales = await prisma.sale.count();
+        const revenueStats = await prisma.sale.aggregate({
         _sum: { precoVenda: true },
         _avg: { precoVenda: true },
         _min: { precoVenda: true },
@@ -14,14 +14,14 @@ const getSalesStats = async (req, res) => {
         });
 
         // 2. Vendas por método de pagamento
-        const salesByPayment = await prisma.venda.groupBy({
+        const salesByPayment = await prisma.sale.groupBy({
         by: ['formaPagamento'],
         _count: { _all: true },
         _sum: { precoVenda: true }
         });
 
         // 3. Vendas por status (se tivesse status)
-        const salesByStatus = await prisma.venda.groupBy({
+        const salesByStatus = await prisma.sale.groupBy({
         by: ['status'],  // Campo agora existe
         _count: { _all: true }
         });
@@ -31,7 +31,7 @@ const getSalesStats = async (req, res) => {
         const twelveMonthsAgo = new Date();
         twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
-        const monthlySales = await prisma.venda.groupBy({
+        const monthlySales = await prisma.sale.groupBy({
         by: ['dataVenda'],
         where: {
             dataVenda: {
@@ -51,14 +51,14 @@ const getSalesStats = async (req, res) => {
         }));
 
         // 5. Vendas por categoria de veículo
-        const salesByCategory = await prisma.venda.groupBy({
+        const salesByCategory = await prisma.sale.groupBy({
             by: ['categoriaVeiculo'],  // Campo direto
             _count: { _all: true },
             _sum: { precoVenda: true }
         });
 
         // 6. Top vendedores
-        const topSellers = await prisma.venda.groupBy({
+        const topSellers = await prisma.sale.groupBy({
         by: ['vendedorId'],
         _count: { _all: true },
         _sum: { precoVenda: true },

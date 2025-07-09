@@ -19,7 +19,9 @@ const {getVehicles} = require('./getVehicles')
 
 const {updateVehicleStatus} = require('./updateVehicleStatus')
 
-
+const {getVehicleAddress} = require('./getVehicleAddress')
+const {addOrUpdateVehicleAddress} = require('./createVehicleAdress')
+const {removeVehicleAddress} = require('./deleteVehicleAdress')
 
 module.exports = {
     createVehicle,
@@ -37,4 +39,7 @@ module.exports = {
     getUserVehicles,
     updateVehicleStatus,
     getVehicleStats,
+    getVehicleAddress,
+    addOrUpdateVehicleAddress,
+    removeVehicleAddress
 }

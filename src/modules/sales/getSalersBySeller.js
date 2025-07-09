@@ -12,7 +12,7 @@ const getSalesBySeller = async (req, res) => {
         }
 
         const [asSeller, asBuyer] = await Promise.all([
-            prisma.venda.findMany({
+            prisma.sale.findMany({
                 where: { vendedorId: userId },
                 include: {
                     vehicle: {
@@ -26,7 +26,7 @@ const getSalesBySeller = async (req, res) => {
                 },
                 orderBy: { dataVenda: 'desc' }
             }),
-            prisma.venda.findMany({
+            prisma.sale.findMany({
                 where: { compradorId: userId },
                 include: {
                     vehicle: {
