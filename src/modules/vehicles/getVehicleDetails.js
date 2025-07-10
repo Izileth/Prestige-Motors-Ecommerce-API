@@ -1,5 +1,5 @@
 const { PrismaClient, Prisma } = require('@prisma/client');
-const { Prisma } = require('@prisma/client');
+
 const prisma = new PrismaClient();
 
 const handlePrismaError = (error, res) => {

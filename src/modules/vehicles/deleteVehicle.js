@@ -3,7 +3,6 @@ const { PrismaClient, Prisma } = require('@prisma/client'); // Adicione Prisma Ã
 
 const prisma = new PrismaClient();
 
-const { Prisma } = require('@prisma/client');
 const handlePrismaError = (error, res) => {
     console.error('Erro Prisma:', error);
     
