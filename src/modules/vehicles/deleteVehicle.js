@@ -55,7 +55,7 @@ const deleteVehicle = async (req, res) => {
             
             // 2. Deletar outros relacionamentos se existirem (ex: videos, favoritos)
             prisma.video.deleteMany({ where: { vehicleId: id } }),
-            prisma.favorito.deleteMany({ where: { vehicleId: id } }),
+            prisma.favorites.deleteMany({ where: { vehicleId: id } }),
             
             // 3. Finalmente deletar o veículo
             prisma.vehicle.delete({

@@ -8,7 +8,7 @@ const updateReview = async (req, res) => {
         const { rating, comentario } = req.body;
 
         // Verifica se o comentário existe e pertence ao usuário
-        const existingReview = await prisma.avaliacao.findUnique({
+        const existingReview = await prisma.review.findUnique({
             where: { id: reviewId }
         });
 
@@ -37,7 +37,7 @@ const updateReview = async (req, res) => {
         }
 
         // Atualiza o comentário
-        const updatedReview = await prisma.avaliacao.update({
+        const updatedReview = await prisma.review.update({
             where: { id: reviewId },
             data: {
                 rating,

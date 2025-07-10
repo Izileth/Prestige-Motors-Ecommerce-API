@@ -7,7 +7,7 @@ const getVehicleReviews = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const reviews = await prisma.avaliacao.findMany({
+        const reviews = await prisma.review.findMany({
         where: { vehicleId: id },
         include: {
             user: {
@@ -21,7 +21,7 @@ const getVehicleReviews = async (req, res) => {
         });
 
         // Calcula média de avaliações
-        const avgRating = await prisma.avaliacao.aggregate({
+        const avgRating = await prisma.review.aggregate({
         where: { vehicleId: id },
         _avg: { rating: true }
         });

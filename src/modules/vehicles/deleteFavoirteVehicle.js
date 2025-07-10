@@ -26,7 +26,7 @@ const removeFavoriteVehicle = async (req, res) => {
         const userId = req.user.id;
 
         // Verificar se o favorito existe
-        const favorite = await prisma.favorito.findUnique({
+        const favorite = await prisma.favorites.findUnique({
             where: {
                 userId_vehicleId: {
                     userId,
@@ -43,7 +43,7 @@ const removeFavoriteVehicle = async (req, res) => {
         }
 
         // Remover dos favoritos
-        await prisma.favorito.delete({
+        await prisma.favorites.delete({
             where: {
                 id: favorite.id
             }

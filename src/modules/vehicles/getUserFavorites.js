@@ -36,7 +36,7 @@ const getUserFavorites = async (req, res) => {
         const limitNum = parseInt(limit);
         
         const [favorites, totalCount] = await Promise.all([
-            prisma.favorito.findMany({
+            prisma.favorites.findMany({
                 where: {
                     userId
                 },
@@ -69,7 +69,7 @@ const getUserFavorites = async (req, res) => {
                     createdAt: 'desc'
                 }
             }),
-            prisma.favorito.count({
+            prisma.favorites.count({
                 where: {
                     userId
                 }

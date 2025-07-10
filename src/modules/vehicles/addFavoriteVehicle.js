@@ -41,7 +41,7 @@ const addFavoriteVehicle = async (req, res) => {
         }
         
         // Verificar se já é favorito
-        const existingFavorite = await prisma.favorito.findUnique({
+        const existingFavorite = await prisma.favorites.findUnique({
             where: {
                 userId_vehicleId: {
                     userId,
@@ -54,7 +54,7 @@ const addFavoriteVehicle = async (req, res) => {
         
         if (existingFavorite) {
             // Remover dos favoritos
-            result = await prisma.favorito.delete({
+            result = await prisma.favorites.delete({
                 where: {
                     id: existingFavorite.id
                 }
@@ -66,7 +66,7 @@ const addFavoriteVehicle = async (req, res) => {
             });
         } else {
             // Adicionar aos favoritos
-            result = await prisma.favorito.create({
+            result = await prisma.favorites.create({
                 data: {
                     userId,
                     vehicleId: id

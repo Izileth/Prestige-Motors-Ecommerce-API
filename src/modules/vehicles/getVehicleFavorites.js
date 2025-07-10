@@ -73,7 +73,7 @@ const getVehicleFavorites = async (req, res) => {
                 skip: (parseInt(page) - 1) * parseInt(limit),
                 take: parseInt(limit)
             }),
-            prisma.favorito.count({ where })
+            prisma.favorites.count({ where })
         ]);
         
         res.json({

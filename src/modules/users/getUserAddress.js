@@ -12,7 +12,7 @@ const getUserAddresses = async (req, res) => {
         return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
-        const addresses = await prisma.endereco.findMany({
+        const addresses = await prisma.address.findMany({
         where: { userId: id },
         select: {
             id: true,

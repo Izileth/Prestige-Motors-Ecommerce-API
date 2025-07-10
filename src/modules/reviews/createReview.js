@@ -9,7 +9,7 @@ const createReview = async (req, res) => {
         const { id } = req.params;
         const { rating, comentario } = req.body;
 
-        const review = await prisma.avaliacao.create({
+        const review = await prisma.review.create({
         data: {
             vehicleId: id,
             userId: req.user.id,

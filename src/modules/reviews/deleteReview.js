@@ -8,7 +8,7 @@ const deleteReview = async (req, res) => {
         const { reviewId } = req.params;
 
         // Verifica se o comentário existe e pertence ao usuário
-        const existingReview = await prisma.avaliacao.findUnique({
+        const existingReview = await prisma.review.findUnique({
             where: { id: reviewId }
         });
 
@@ -21,7 +21,7 @@ const deleteReview = async (req, res) => {
         }
 
         // Remove o comentário
-        await prisma.avaliacao.delete({
+        await prisma.review.delete({
             where: { id: reviewId }
         });
 
