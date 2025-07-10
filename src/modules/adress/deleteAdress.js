@@ -7,7 +7,7 @@ const deleteAddress = async (req, res) => {
         const { addressId } = req.params;
 
         // 1. Verificar se o endereço existe usando findUnique
-        const addressExists = await prisma.endereco.findUnique({
+        const addressExists = await prisma.address.findUnique({
         where: { id: addressId },
         select: { id: true },
         });
@@ -22,7 +22,7 @@ const deleteAddress = async (req, res) => {
 
         // 2. Atualizar o createdAt se for nulo (usando update)
         try {
-        await prisma.endereco.update({
+        await prisma.address.update({
             where: { id: addressId },
             data: {
             createdAt: new Date(),
@@ -34,7 +34,7 @@ const deleteAddress = async (req, res) => {
         }
 
         // 3. Agora deletar normalmente
-        await prisma.endereco.delete({
+        await prisma.address.delete({
         where: { id: addressId },
         });
 

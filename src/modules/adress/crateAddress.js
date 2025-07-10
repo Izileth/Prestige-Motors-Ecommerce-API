@@ -13,7 +13,7 @@ const createAddress = async (req, res) => {
         return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
-        const address = await prisma.endereco.create({
+        const address = await prisma.address.create({
         data: {
             ...addressData,
             userId: id

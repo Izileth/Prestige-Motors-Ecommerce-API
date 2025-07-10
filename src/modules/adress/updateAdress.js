@@ -9,7 +9,7 @@ const updateAddress = async (req, res) => {
         const addressData = req.body;
 
         // Primeiro verifica se o endereço pertence ao usuário
-        const existingAddress = await prisma.endereco.findUnique({
+        const existingAddress = await prisma.address.findUnique({
         where: { id: addressId },
         select: { userId: true }
         });
@@ -22,7 +22,7 @@ const updateAddress = async (req, res) => {
         return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
-        const updatedAddress = await prisma.endereco.update({
+        const updatedAddress = await prisma.address.update({
         where: { id: addressId },
         data: addressData
         });
