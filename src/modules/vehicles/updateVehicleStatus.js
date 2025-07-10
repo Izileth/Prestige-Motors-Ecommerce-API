@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-
+const { Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 
