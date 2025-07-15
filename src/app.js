@@ -11,17 +11,73 @@ const {errorMiddleware} = require('./utils/errorHandler');
 
 const app = express();
 
-// Limitador de requisições
+// 1. CORS deve vir ANTES de outros middlewares
+const allowedOrigins = [
+  'https://vortex-motors-services.vercel.app',
+  'https://prestige-motors-eta.vercel.app', 
+  'http://localhost:5173',
+  'http://localhost:3000' // Adicione outras portas se necessário
+];
 
-app.use(preventDuplicates.default);
+// Configuração CORS mais permissiva para debugging
+app.use(cors({
+  origin: function(origin, callback) {
+    console.log('Origin da requisição:', origin); // Debug
+    
+    // Permitir requisições sem origin (Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Verificar se a origem está permitida
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Origin rejeitada:', origin);
+      callback(new Error('Bloqueado pelo CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Cache-Control',
+    'Cookie',
+    'Set-Cookie',
+    'Access-Control-Allow-Origin'
+  ],
+  exposedHeaders: ['Set-Cookie', 'Authorization'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+}));
 
-// Tratamento de erros
+// 2. Headers adicionais para garantir CORS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Cache-Control, Cookie, Set-Cookie');
+  res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie, Authorization');
+  
+  // Responder a requisições OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
-app.use(errorMiddleware);
-
-// 1. Middlewares iniciais (segurança básica)
+// 3. Middlewares de segurança (após CORS)
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" } // Configuração específica do Helmet
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
 
 app.use(xss());
@@ -29,82 +85,49 @@ app.use(morgan('combined'));
 app.use(cookieParser());
 app.use(express.json());
 
-// 2. Configuração CORS (DEVE vir após helmet e antes das rotas)
-const allowedOrigins = [
-  'https://vortex-motors-services.vercel.app', // Teste 1
-  'https://prestige-motors-eta.vercel.app', // Teste 2
-  'http://localhost:5173' // Para desenvolvimento
-];
+// 4. Middleware personalizado (movido para depois do CORS)
+app.use(preventDuplicates.default);
+app.use(errorMiddleware);
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Permitir requisições sem origin (como apps mobile ou curl)
-    if (!origin) return callback(null, true);
-    
-    // Verificar se a origem está na lista de permitidos
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Bloqueado pelo CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Accept',
-    'Cache-Control',
-    'Cookie',
-    'Set-Cookie'
-  ],
-  exposedHeaders: ['Set-Cookie', 'Authorization'],
-  optionsSuccessStatus: 200
-}));
-
-// 3. Middleware personalizado para headers adicionais (OPCIONAL)
-app.use((req, res, next) => {
-  res.header('Permissions-Policy', 'interest-cohort=()');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Expose-Headers', 'Set-Cookie, Authorization');
-  
-  // Certificar-se de que o Preflight OPTIONS funcione corretamente
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
-
-// 4. Rate Limiting
+// 5. Rate Limiting
 app.use(rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: 'Muitas requisições deste IP, tente novamente mais tarde.'
 }));
 
-// 5. Rotas
+// 6. Middleware de debug para CORS
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  next();
+});
+
+// 7. Rotas
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/negotiations', require('./routes/negociationRoutes'));
 
-// 6. Rota de teste
+// 8. Rota de teste CORS
 app.get('/api/test', (req, res) => {
   res.json({ 
     message: 'API Working Correctly!',
     endpoints: {
       users: '/api/users',
-      vehciles: '/api/vehicles',
+      vehicles: '/api/vehicles', // Corrigido typo
       sales: '/api/sales'
     },  
     environment: process.env.NODE_ENV,
-    allowedOrigins
+    allowedOrigins,
+    requestOrigin: req.headers.origin,
+    corsHeaders: {
+      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+      'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+    }
   });
 });
 
-// 7. Tratamento de erros
+// 9. Tratamento de erros
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ 

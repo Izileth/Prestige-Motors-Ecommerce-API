@@ -1,5 +1,8 @@
 
-const prisma = require('../../config/database'); 
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
 const { handlePrismaError } = require('../../utils/errorHandler');
 
 const getUserAddresses = async (req, res) => {
