@@ -27,6 +27,8 @@ const {
 } = require('../modules/users/userModule')
 const { authenticate, authorize, checkSession } = require('../middleware/authMiddleware');
 
+const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware')
+
 // Rotas públicas
 router.post('/register', register);
 router.post('/login', login);
@@ -46,7 +48,7 @@ router.get('/me', authenticate, (req, res) => {
 router.get('/:id', authenticate, getUserById);
 router.put('/:id', authenticate, updateUser);
 router.delete('/:id', authenticate, deleteUser);
-router.get('/:id/stats', authenticate, getUserStats);
+router.get('/:id/stats', authenticate, getUserStats, getUserStatsWithTimeout);
 
 // Rotas de endereço
 router.get('/:id/addresses', authenticate, authorize(['USER', 'ADMIN']), getUserAddresses);

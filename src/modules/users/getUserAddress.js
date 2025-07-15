@@ -9,7 +9,7 @@ const getUserAddresses = async (req, res) => {
         
         // Verifica se o usuário está acessando seus próprios endereços ou é admin
         if (req.user.id !== id && req.user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Acesso não autorizado' });
+            return res.status(403).json({ error: 'Acesso não autorizado' });
         }
 
         const addresses = await prisma.address.findMany({
