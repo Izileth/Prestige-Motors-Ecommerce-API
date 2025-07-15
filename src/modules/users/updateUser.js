@@ -3,6 +3,8 @@ const { z } = require('zod');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
 
+
+
 const updateUserSchema = z.object({
     nome: z.string().min(3).transform(val => val.trim()).optional(),
     email: z.string().email().transform(val => val.toLowerCase().trim()).optional(),

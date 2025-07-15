@@ -6,12 +6,24 @@ const morgan = require('morgan');
 const xss = require('xss-clean');
 const cookieParser = require('cookie-parser');
 
+const {preventDuplicates} = require('./middleware/cacheSizeMiddleware');
+const {errorMiddleware} = require('./utils/errorHandler');
+
 const app = express();
+
+// Limitador de requisições
+
+app.use(preventDuplicates.default);
+
+// Tratamento de erros
+
+app.use(errorMiddleware);
 
 // 1. Middlewares iniciais (segurança básica)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" } // Configuração específica do Helmet
 }));
+
 app.use(xss());
 app.use(morgan('combined'));
 app.use(cookieParser());

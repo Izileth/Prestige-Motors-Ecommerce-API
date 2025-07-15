@@ -2,6 +2,8 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+const { handlePrismaError } = require('../../utils/errorHandler');
+
 const getUsers = async (req, res) => {
     try {
         const { nome, email, page = 1, limit = 10 } = req.query;

@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+const { handlePrismaError } = require('../../utils/errorHandler');
 
 const getUserById = async (req, res) => {
     try {
