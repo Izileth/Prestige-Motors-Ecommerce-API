@@ -10,6 +10,7 @@ const {
     getSalesByVehicle,
     getSalesStats, 
     getUserSalesHistory,
+    getUserTransactions
 } = require('../modules/sales/salesModule')
 
 const { authenticate, authorize } = require('../middleware/authMiddleware');
@@ -27,6 +28,9 @@ router.put('/:id', authenticate, authorize(['ADMIN', 'USER']), updateSale);
 router.get('/vehicles/:vehicleId', authenticate, getSalesByVehicle);
 
 router.get('/:userId/stats', authenticate, getUserSalesHistory);
+
+router.get('/transactions/:userId', authenticate, getUserTransactions);
+
 router.get('/buyers/:userId', authenticate,  getPurchasesByUser);
 router.get('/sellers/:userId', authenticate, authorize(['USER', 'ADMIN']), getSalesBySeller);
 
