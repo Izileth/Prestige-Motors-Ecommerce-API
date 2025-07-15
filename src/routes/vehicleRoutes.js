@@ -115,7 +115,7 @@ router.put('/:id',
 
 router.put('/:id/status', authenticate, authorize(['USER', 'ADMIN']), updateVehicleStatus);
 router.put('/reviews/:reviewId', authenticate, authorize(['USER', 'ADMIN']), updateReview);
-router.put('/:vehicleId/address/:addressId', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
+router.put('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
 router.delete('/reviews/:reviewId', authenticate,  authorize(['USER', 'ADMIN']), deleteReview);
 router.delete('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), removeVehicleAddress);
 router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
