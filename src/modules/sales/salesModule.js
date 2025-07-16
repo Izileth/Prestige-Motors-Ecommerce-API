@@ -7,6 +7,7 @@ const {getPurchasesByUser} = require('./getSalesByBuyers')
 const {getSalesBySeller} = require('./getSalersBySeller')
 
 const {getUserTransactions} = require('./getSaleTransactions')
+const {getUserSalesStats} = require('./getSaleUserStats')
 const {getSalesStats} = require('./getSalesStats')
 
 const {getSalesByVehicle} = require('./getSalesByVehile')
@@ -20,5 +21,6 @@ module.exports = {
     getSalesBySeller,
     getUserSalesHistory,
     getSalesByVehicle,
+    getUserSalesStats,
     getSalesStats
 }

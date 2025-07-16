@@ -7,23 +7,23 @@ const getSalesStats = async (req, res) => {
         // 1. Estatísticas básicas
         const totalSales = await prisma.sale.count();
         const revenueStats = await prisma.sale.aggregate({
-        _sum: { precoVenda: true },
-        _avg: { precoVenda: true },
-        _min: { precoVenda: true },
-        _max: { precoVenda: true }
+            _sum: { precoVenda: true },
+            _avg: { precoVenda: true },
+            _min: { precoVenda: true },
+            _max: { precoVenda: true }
         });
 
         // 2. Vendas por método de pagamento
         const salesByPayment = await prisma.sale.groupBy({
-        by: ['formaPagamento'],
-        _count: { _all: true },
-        _sum: { precoVenda: true }
+            by: ['formaPagamento'],
+            _count: { _all: true },
+            _sum: { precoVenda: true }
         });
 
-        // 3. Vendas por status (se tivesse status)
+        // 3. Vendas por status
         const salesByStatus = await prisma.sale.groupBy({
-        by: ['status'],  // Campo agora existe
-        _count: { _all: true }
+            by: ['status'],
+            _count: { _all: true }
         });
 
         // 4. Vendas mensais (últimos 12 meses)
@@ -32,83 +32,83 @@ const getSalesStats = async (req, res) => {
         twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
         const monthlySales = await prisma.sale.groupBy({
-        by: ['dataVenda'],
-        where: {
-            dataVenda: {
-            gte: twelveMonthsAgo,
-            lte: currentDate
-            }
-        },
-        _count: { _all: true },
-        _sum: { precoVenda: true }
+            by: ['dataVenda'],
+            where: {
+                dataVenda: {
+                    gte: twelveMonthsAgo,
+                    lte: currentDate
+                }
+            },
+            _count: { _all: true },
+            _sum: { precoVenda: true }
         });
 
         // Formatar dados mensais
         const formattedMonthlySales = monthlySales.map(sale => ({
-        month: sale.dataVenda.toISOString().slice(0, 7), // Formato YYYY-MM
-        count: sale._count._all,
-        total: sale._sum.precoVenda
+            month: sale.dataVenda.toISOString().slice(0, 7),
+            count: sale._count._all,
+            total: sale._sum.precoVenda
         }));
 
         // 5. Vendas por categoria de veículo
         const salesByCategory = await prisma.sale.groupBy({
-            by: ['categoriaVeiculo'],  // Campo direto
+            by: ['categoriaVeiculo'],
             _count: { _all: true },
             _sum: { precoVenda: true }
         });
 
         // 6. Top vendedores
         const topSellers = await prisma.sale.groupBy({
-        by: ['vendedorId'],
-        _count: { _all: true },
-        _sum: { precoVenda: true },
-        orderBy: {
-            _sum: {
-            precoVenda: 'desc'
-            }
-        },
-        take: 5
+            by: ['vendedorId'],
+            _count: { _all: true },
+            _sum: { precoVenda: true },
+            orderBy: {
+                _sum: {
+                    precoVenda: 'desc'
+                }
+            },
+            take: 5
         });
 
         // Formatar resposta
         const stats = {
-        totals: {
-            sales: totalSales,
-            revenue: revenueStats._sum.precoVenda || 0,
-            averageSale: revenueStats._avg.precoVenda || 0,
-            minSale: revenueStats._min.precoVenda || 0,
-            maxSale: revenueStats._max.precoVenda || 0
-        },
-        byPaymentMethod: salesByPayment.reduce((acc, item) => {
-            acc[item.formaPagamento] = {
-            count: item._count._all,
-            total: item._sum.precoVenda
-            };
-            return acc;
-        }, {}),
-        byStatus: salesByStatus.reduce((acc, item) => {
-            acc[item.status] = item._count._all;
-            return acc;
-        }, {}),
-        monthlySales: formattedMonthlySales,
-        byVehicleCategory: salesByCategory.reduce((acc, item) => {
-            acc[item['vehicle.categoria']] = {
-            count: item._count._all,
-            total: item._sum.precoVenda
-            };
-            return acc;
-        }, {}),
-        topSellers: await Promise.all(topSellers.map(async seller => {
-            const user = await prisma.user.findUnique({
-            where: { id: seller.vendedorId },
-            select: { nome: true, email: true }
-            });
-            return {
-            seller: user,
-            salesCount: seller._count._all,
-            totalRevenue: seller._sum.precoVenda
-            };
-        }))
+            totals: {
+                sales: totalSales,
+                revenue: revenueStats._sum.precoVenda || 0,
+                averageSale: revenueStats._avg.precoVenda || 0,
+                minSale: revenueStats._min.precoVenda || 0,
+                maxSale: revenueStats._max.precoVenda || 0
+            },
+            byPaymentMethod: salesByPayment.reduce((acc, item) => {
+                acc[item.formaPagamento] = {
+                    count: item._count._all,
+                    total: item._sum.precoVenda
+                };
+                return acc;
+            }, {}),
+            byStatus: salesByStatus.reduce((acc, item) => {
+                acc[item.status] = item._count._all;
+                return acc;
+            }, {}),
+            monthlySales: formattedMonthlySales,
+            byVehicleCategory: salesByCategory.reduce((acc, item) => {
+                acc[item.categoriaVeiculo] = {
+                    count: item._count._all,
+                    total: item._sum.precoVenda
+                };
+                return acc;
+            }, {}),
+            topSellers: await Promise.all(topSellers.map(async seller => {
+                const user = await prisma.user.findUnique({
+                    where: { id: seller.vendedorId },
+                    select: { nome: true, email: true }
+                });
+                return {
+                    seller: user,
+                    salesCount: seller._count._all,
+                    totalRevenue: seller._sum.precoVenda
+                };
+            }))
         };
 
         res.json(stats);
@@ -118,7 +118,82 @@ const getSalesStats = async (req, res) => {
     }
 };
 
+// Função para histórico específico do usuário (diferente das stats)
+const getUserSalesHistory = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Implementar lógica específica para histórico
+        // Esta pode ser diferente das estatísticas completas
+        
+        const userSales = await prisma.sale.findMany({
+            where: { vendedorId: userId },
+            orderBy: { dataVenda: 'desc' },
+            include: {
+                comprador: {
+                    select: { nome: true, email: true }
+                }
+            }
+        });
+
+        const userPurchases = await prisma.sale.findMany({
+            where: { compradorId: userId },
+            orderBy: { dataVenda: 'desc' },
+            include: {
+                vendedor: {
+                    select: { nome: true, email: true }
+                }
+            }
+        });
+
+        res.json({
+            sales: userSales,
+            purchases: userPurchases
+        });
+    } catch (error) {
+        console.error('Error fetching user sales history:', error);
+        res.status(500).json({ error: 'Failed to fetch user sales history' });
+    }
+};
+
+// Função para transações do usuário
+const getUserTransactions = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const asBuyer = await prisma.sale.findMany({
+            where: { compradorId: userId },
+            orderBy: { dataVenda: 'desc' },
+            include: {
+                vendedor: {
+                    select: { nome: true, email: true }
+                }
+            }
+        });
+
+        const asSeller = await prisma.sale.findMany({
+            where: { vendedorId: userId },
+            orderBy: { dataVenda: 'desc' },
+            include: {
+                comprador: {
+                    select: { nome: true, email: true }
+                }
+            }
+        });
+
+        res.json({
+            asBuyer,
+            asSeller
+        });
+    } catch (error) {
+        console.error('Error fetching user transactions:', error);
+        res.status(500).json({ error: 'Failed to fetch user transactions' });
+    }
+};
 
 module.exports = {
-    getSalesStats
-}
+    getSalesStats,
+    getUserSalesHistory,
+    getUserTransactions
+    // ... outras funções existentes
+};
