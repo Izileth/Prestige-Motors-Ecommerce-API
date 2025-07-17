@@ -40,7 +40,7 @@ router.get('/check-session', authenticate, checkSession);
 router.post('/logout', authenticate, logout);
 
 // Rotas de usuário
-router.get('/', authenticate, authorize(['ADMIN']), getUsers);
+router.get('/', authenticate, authorize(['USER', 'ADMIN']), getUsers);
 router.get('/me', authenticate, (req, res) => {
     res.json({ user: req.user });
 });
