@@ -32,7 +32,7 @@ model User {
   negociacoesComoVendedor  Negociations[] @relation("NegociacoesComoVendedor")
   taxaAceitacao            Float?      
   
-  negociacoesHistorico NegociatonsHistory[]
+  negociacoesHistorico NegotiationsHistory[] 
   
   mensagens Mensage[]
 
@@ -196,18 +196,18 @@ model Negociations{
   motivoRecusa      String?
   dataFechamento    DateTime?
   
-  historico NegociatonsHistory[] 
+  historico NegotiationsHistory[] 
   
   // Relações
   vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
   comprador User     @relation("NegociacoesComoComprador", fields: [compradorId], references: [id])
   vendedor  User     @relation("NegociacoesComoVendedor", fields: [vendedorId], references: [id])
 
-  tempoMedioResposta Int?        // Em minutos (calculado automaticamente)
+  tempoMedioResposta Int?       
 
-  @@index([vehicleId])
-  @@index([compradorId])
-  @@index([vendedorId])
+
+  @@index([compradorId, status, updatedAt])
+  @@index([vendedorId, status, updatedAt])
   @@index([status])
   @@index([createdAt])
 }
@@ -259,13 +259,14 @@ model Mensage {
   @@index([autorId])
 }
 
-model NegociatonsHistory {
+model NegotiationsHistory {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
   negociacaoId   String      @db.ObjectId
   acao           String      // "CRIACAO", "MENSAGEM", "RESPOSTA", "CANCELAMENTO", etc.
   detalhes       Json?       // Dados adicionais em JSON
   usuarioId      String      @db.ObjectId
   createdAt      DateTime    @default(now())
+  
 
   negociacao Negociations @relation(fields: [negociacaoId], references: [id])
   usuario    User         @relation(fields: [usuarioId], references: [id])
