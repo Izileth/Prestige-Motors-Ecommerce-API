@@ -1,8 +1,8 @@
 # API Prestige Motors Documentation
 
-Welcome to Prestige Motors API!
+Bem Vindo a API da Prestige Motors
 
-The Project of API development for Prestige Motors Platform
+Projeto desenvolvido 100% Autodidata
 
 # Getting Started
 
@@ -10,13 +10,13 @@ To run this application:
 
 ```bash
 npm install
-npm run dev
+node src/server.js
 ```
 
 # Building For Development
 
 ```bash
-npm nodemon server.js
+npm nodemon src/server.js
 ```
 
 
@@ -28,6 +28,7 @@ npm nodemon server.js
 
 - Access the test route:  
   `GET {url}/api/test`
+  
 
 
 
@@ -41,6 +42,9 @@ npm nodemon server.js
 
 - Access sales & ad routes:  
   `GET {url}/api/sales`
+
+- Access Negotiations routes:  
+  `GET {url}/api/negotiations`
 
 
 
@@ -138,9 +142,25 @@ npm nodemon server.js
 | `/api/sales/:id`                                | `PUT`    | Atualizar informações de uma venda                    |
 | `/api/sales/vehicles/:vehicleId`                | `GET`    | Obter histórico de vendas de um veículo               |
 | `/api/sales/:userId/stats`                      | `GET`    | Obter estatísticas de vendas de um usuário            |
+| `/api/sales/transactions/:userId`                     | `GET`    | Listar todas as transações e ações feitas por um usuário como comprador & vendedor   |
+| `/api/sales/:userId/history`                     | `GET`    | Listar o histório de vendas e compras do usuário
+
+
 | `/api/sales/buyers/:userId`                     | `GET`    | Listar compras feitas por um usuário como comprador   |
 | `/api/sales/sellers/:userId`                    | `GET`    | Listar vendas feitas por um usuário como vendedor     |
 
+
+### 🔒 Access Negotiations & Discussions – Private
+
+| Endpoint                                         | Método   | Descrição                                             |
+|--------------------------------------------------|----------|-------------------------------------------------------|
+| `/api/negotiations/user`                              | `GET`    | Obter lista de negociações do usuário                |
+| `/api/negotiations/:negotiationId`                                | `GET`    | Obter detalhes de uma Negociação por ID                    |
+| `/api/negotiations/:negotiationId/history`                                    | `GET`   | Obter histório de propostas de uma negociação em especifico                                 |
+| `/api/negotiations/`                                | `POST`    | Criar uma nova negociação                 |
+| `/api/negotiations/:negotiationId/messages`                | `POST`    | Criar uma nova Menssagem para a negociação               |
+| `/api/negotiations/:negotiationId/respond`                      | `PUT`    | Responder a Menssagem de uma negociação          |
+| `/api/negotiations/:negotiationId`                     | `DELETE`    | Deletar uma negociação
 
 
 ### 🔐 Autenticação e Autorização
@@ -161,7 +181,7 @@ npm nodemon server.js
 - **Prefixo Base:** Todas as rotas utilizam o prefixo `/api/`  
 - **Autenticação:** Rotas privadas requerem headers de autenticação apropriados  & Cookies de Proxys Autorizados
 - **CORS:** Configurado para rotas que necessitam de acesso cross-origin  
-- **Parâmetros Dinâmicos:** `:Id`, `::vendorId`, `:userId`, `:addressId`  
+- **Parâmetros Dinâmicos:** `:Id`, `::vendorId`, `:userId`, `:addressId`, `:negotiationId`, `me`
 
 ---
 
@@ -169,6 +189,17 @@ npm nodemon server.js
 
 - Node.js  
 - Express.js  
+- Prisma
+- Cors
+- Multer
+- Cloudinary
+- Helmet
+- Bcrypt
+- Zod
+- Morgan
+- Mongoose
+- Nodemalier
+- MongoDB
 - Nodemon (desenvolvimento)  
 
 ---
