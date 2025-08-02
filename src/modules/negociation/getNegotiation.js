@@ -45,6 +45,8 @@ const getUserNegotiations = async (req, res) => {
                             marca: true,
                             modelo: true,
                             anoFabricacao: true,
+                            categoria: true,
+                            seloOriginal: true,
                             preco: true,
                             imagens: { 
                                 where: { isMain: true },

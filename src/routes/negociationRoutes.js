@@ -25,7 +25,7 @@ router.get('/:negotiationId', authenticate, authorize(['USER', 'ADMIN']),getNego
 router.get('/:negotiationId/history', authenticate, authorize(['USER', 'ADMIN']), getNegotiationHistory);
 
 // Adicionar mensagem
-router.post('/:negotiationId/messages', authenticate, authorize(['USER', 'ADMIN']), addMessage);
+router.post('/:negotiationId', authenticate, authorize(['USER', 'ADMIN']), addMessage);
 
 // Responder à negociação (aceitar/recusar/contraproposta)
 router.put('/:negotiationId/respond', authenticate, authorize(['USER', 'ADMIN']), respondToNegotiation);
