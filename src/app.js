@@ -13,10 +13,10 @@ const app = express();
 
 // 1. CORS deve vir ANTES de outros middlewares
 const allowedOrigins = [
-  'https://vortex-motors-services.vercel.app',
+  'https://prestigemotors.online',
   'https://prestige-motors-eta.vercel.app', 
   'http://localhost:5173',
-  'http://localhost:3000' // Adicione outras portas se necessário
+  'http://localhost:3000' 
 ];
 
 // Configuração CORS mais permissiva para debugging

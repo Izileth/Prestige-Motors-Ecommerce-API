@@ -2,6 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
+const crypto = require('crypto'); // Adicione no topo do arquivo
+const sessionId = crypto.randomUUID();
+
 
 const login = async (req, res) => {
     try {
@@ -40,6 +43,18 @@ const login = async (req, res) => {
             });
         }
 
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isLoggedIn: true,
+                lastLoginAt: new Date(),
+                currentSessionId: sessionId,
+                loginCount: {
+                    increment: 1
+                }
+            }
+        });
+
         // 4. Comparação de senha com tratamento de erro
         let passwordMatch;
         try {
@@ -58,10 +73,12 @@ const login = async (req, res) => {
         }
         
         // 5. Geração de token
+
         const token = jwt.sign(
             { 
                 id: user.id,
-                role: user.role 
+                role: user.role,
+                sessionId: sessionId // ADICIONAR esta linha
             }, 
             process.env.JWT_SECRET, 
             { expiresIn: '1d' }
@@ -92,7 +109,10 @@ const login = async (req, res) => {
                     id: user.id,
                     nome: user.nome,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    isLoggedIn: true,
+                    lastLoginAt: new Date(),
+                    loginCount: user.loginCount + 1
                 }
             });
     } catch (error) {

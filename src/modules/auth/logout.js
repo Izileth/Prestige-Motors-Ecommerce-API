@@ -8,6 +8,31 @@ const prisma = new PrismaClient();
 
 const logout = async (req, res) => {
     try {
+        // Extrair userId do token (se disponível)
+        let userId = null;
+        const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
+        
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                userId = decoded.id;
+            } catch (jwtError) {
+                console.log('Token inválido no logout, mas continuando...');
+            }
+        }
+
+        // Se temos o userId, atualizar status no banco
+        if (userId) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    isLoggedIn: false,
+                    lastLogoutAt: new Date(),
+                    currentSessionId: null
+                }
+            });
+        }
+
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',

@@ -32,6 +32,9 @@ const getUsers = async (req, res) => {
                 role: true,
                 createdAt: true,
                 updatedAt: true,
+                isLoggedIn: true,
+                lastLoginAt: true,
+                loginCount: true,
                 _count: {
                     select: {
                         vehicles: true

@@ -20,6 +20,12 @@ const getUserById = async (req, res) => {
                 role: true,
                 createdAt: true,
                 updatedAt: true,
+                isLoggedIn: true,
+                lastLoginAt: true,
+                loginCount: true,
+                avatar: true,
+                emailVerificado: true,
+                currentSessionId: true,
                 vehicles: {
                     select: {
                         id: true,

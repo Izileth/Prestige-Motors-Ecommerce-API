@@ -10,12 +10,12 @@ datasource db {
 model User {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   nome                String
-  email               String      @unique // Adicione esta linha
+  email               String      @unique
   senha               String
   role                String      @default("USER")
   telefone            String?
-  enderecos           Address[] // Relação one-to-many
-  cpf                 String? // Sem @unique
+  enderecos           Address[]   // Relação one-to-many
+  cpf                 String?     // Sem @unique
   dataNascimento      DateTime?
   avatar              String?
   emailVerificado     Boolean     @default(false)
@@ -25,8 +25,8 @@ model User {
   veiculosFavoritos   Favorites[]
   visualizacoes       ViewLog[]
   avaliacoes          Review[]
-  vendasComoVendedor  Sale[]     @relation("VendasComoVendedor")
-  vendasComoComprador Sale[]     @relation("VendasComoComprador")
+  vendasComoVendedor  Sale[]      @relation("VendasComoVendedor")
+  vendasComoComprador Sale[]      @relation("VendasComoComprador")
   
   negociacoesComoComprador Negociations[] @relation("NegociacoesComoComprador")
   negociacoesComoVendedor  Negociations[] @relation("NegociacoesComoVendedor")
@@ -39,6 +39,13 @@ model User {
   // Recuperação de senha
   resetToken       String?
   resetTokenExpiry DateTime?
+
+  // Controle de login e sessão
+  isLoggedIn       Boolean   @default(false)  // Se o usuário está logado
+  lastLoginAt      DateTime? // Última vez que fez login
+  lastLogoutAt     DateTime? // Última vez que fez logout
+  currentSessionId String?   // ID da sessão atual (opcional)
+  loginCount       Int       @default(0)      // Contador total de logins
 }
 
 model Vehicle {
