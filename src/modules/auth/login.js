@@ -6,6 +6,7 @@ const crypto = require('crypto'); // Adicione no topo do arquivo
 const sessionId = crypto.randomUUID();
 
 
+
 const login = async (req, res) => {
     try {
         if (!req.body || typeof req.body !== 'object') {
@@ -48,10 +49,6 @@ const login = async (req, res) => {
             data: {
                 isLoggedIn: true,
                 lastLoginAt: new Date(),
-                currentSessionId: sessionId,
-                loginCount: {
-                    increment: 1
-                }
             }
         });
 
@@ -112,7 +109,6 @@ const login = async (req, res) => {
                     role: user.role,
                     isLoggedIn: true,
                     lastLoginAt: new Date(),
-                    loginCount: user.loginCount + 1
                 }
             });
     } catch (error) {
