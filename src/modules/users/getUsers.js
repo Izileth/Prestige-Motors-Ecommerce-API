@@ -26,15 +26,13 @@ const getUsers = async (req, res) => {
                 id: true,
                 nome: true,
                 email: true,
+                avatar: true,
                 telefone: true,
                 cpf: true,
                 dataNascimento: true,
                 role: true,
                 createdAt: true,
                 updatedAt: true,
-                isLoggedIn: true,
-                lastLoginAt: true,
-                loginCount: true,
                 _count: {
                     select: {
                         vehicles: true

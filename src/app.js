@@ -15,8 +15,7 @@ const app = express();
 const allowedOrigins = [
   'https://prestigemotors.online',
   'https://prestige-motors-eta.vercel.app', 
-  'http://localhost:5173',
-  'http://localhost:3000' 
+  'http://localhost:5173'
 ];
 
 // Configuração CORS mais permissiva para debugging
