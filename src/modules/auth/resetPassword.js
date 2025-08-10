@@ -216,7 +216,7 @@ const resetPassword = async (req, res) => {
             console.log('Email de confirmação enviado:', emailResponse.id);
         } catch (emailError) {
             console.error('Erro ao enviar email de confirmação:', emailError);
-            // Log do erro mas não falhar a redefinição
+            
         }
         
         // Log de segurança

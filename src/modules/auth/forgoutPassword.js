@@ -6,7 +6,7 @@ const { Resend } = require('resend');
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ⚠️ CORREÇÃO PRINCIPAL: Formato correto do campo FROM
+
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Prestige Motors <noreply@prestigemotors.online>';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://prestigemotors.online';
 

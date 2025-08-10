@@ -3,7 +3,7 @@ const {login} = require('./login')
 const {logout} = require('./logout')
 
 const {forgotPassword, validateAndFormatFromField, debugEmailFrom} = require('./forgoutPassword')
-const {resetPassword} = require('./resetPassword')
+const {resetPassword, invalidateUserResetTokens} = require('./resetPassword')
 
 
 module.exports = {
@@ -14,5 +14,6 @@ module.exports = {
     forgotPassword,
     resetPassword,
     validateAndFormatFromField,
-    debugEmailFrom
+    debugEmailFrom,
+    invalidateUserResetTokens
 }

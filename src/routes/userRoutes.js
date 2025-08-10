@@ -15,7 +15,8 @@ const {
     resetPassword,
     forgotPassword,
     validateAndFormatFromField,
-    debugEmailFrom
+    debugEmailFrom,
+    invalidateUserResetTokens
 } = require('../modules/auth/authModule')
 
 const {
@@ -35,7 +36,7 @@ const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware')
 router.post('/register', register);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword, validateAndFormatFromField, debugEmailFrom);
-router.post('/reset-password', resetPassword, validateAndFormatFromField);
+router.post('/reset-password', resetPassword, invalidateUserResetTokens);
 
 // Rotas de autenticação
 router.get('/check-session', authenticate, checkSession);
