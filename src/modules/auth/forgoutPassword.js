@@ -1,3 +1,4 @@
+
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
 const { Resend } = require('resend');
@@ -5,11 +6,47 @@ const { Resend } = require('resend');
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const RESET_TOKEN_EXPIRY = 3600000; // 1 hora em milissegundos
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@prestigemotors.online';
+// ⚠️ CORREÇÃO PRINCIPAL: Formato correto do campo FROM
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Prestige Motors <noreply@prestigemotors.online>';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://prestigemotors.online';
 
-// Template de email minimalista monocromático para recuperação de senha
+// Função para validar e formatar o campo FROM
+const validateAndFormatFromField = () => {
+    let fromField = process.env.EMAIL_FROM;
+    
+    if (!fromField) {
+        // Valor padrão com nome e email
+        return 'Prestige Motors <noreply@prestigemotors.online>';
+    }
+    
+    // Limpar espaços extras
+    fromField = fromField.trim();
+    
+    // Verificar se já está no formato correto
+    const formatWithName = /^.+\s<.+@.+\..+>$/;
+    const formatEmailOnly = /^.+@.+\..+$/;
+    
+    if (formatWithName.test(fromField) || formatEmailOnly.test(fromField)) {
+        return fromField;
+    }
+    
+    // Se não está em formato válido, usar padrão
+    console.warn('EMAIL_FROM em formato inválido, usando padrão');
+    return 'Prestige Motors <noreply@prestigemotors.online>';
+};
+
+// Usar a função para obter o FROM correto
+const VALIDATED_EMAIL_FROM = validateAndFormatFromField();
+
+// Função para debug do campo FROM
+const debugEmailFrom = () => {
+    console.log('=== DEBUG EMAIL FROM ===');
+    console.log('EMAIL_FROM env:', process.env.EMAIL_FROM);
+    console.log('Validated FROM:', VALIDATED_EMAIL_FROM);
+    console.log('=======================');
+};
+
+// Template de email (mesmo código anterior, mas com FROM corrigido)
 const createPasswordResetEmailTemplate = (resetUrl, userEmail) => {
     const currentYear = new Date().getFullYear();
     
@@ -27,8 +64,8 @@ const createPasswordResetEmailTemplate = (resetUrl, userEmail) => {
                 
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 40px;">
-                    <div style="border: 1px solid #000000; display: inline-block; padding: 8px 16px;">
-                        <h1 style="margin: 0; font-size: 20px; font-weight: 400; letter-spacing: 1px;">
+                    <div style="border: 2px solid #000000; display: inline-block; padding: 12px 24px;">
+                        <h1 style="margin: 0; font-size: 24px; font-weight: 400; letter-spacing: 2px;">
                             PRESTIGE MOTORS
                         </h1>
                     </div>
@@ -39,39 +76,39 @@ const createPasswordResetEmailTemplate = (resetUrl, userEmail) => {
                     
                     <!-- Lock Icon -->
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="width: 50px; height: 50px; border: 1px solid #000000; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background-color: #ffffff;">
-                            <span style="color: #000000; font-size: 20px;">🔒</span>
+                        <div style="width: 60px; height: 60px; border: 2px solid #000000; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background-color: #ffffff;">
+                            <span style="color: #000000; font-size: 24px;">🔑</span>
                         </div>
                     </div>
 
                     <!-- Title -->
-                    <h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 300; text-align: center; color: #000000;">
+                    <h2 style="margin: 0 0 20px 0; font-size: 28px; font-weight: 300; text-align: center; color: #000000;">
                         Redefinir Senha
                     </h2>
 
                     <!-- Divider -->
-                    <div style="height: 1px; background-color: #000000; margin: 30px auto; width: 40px;"></div>
+                    <div style="height: 1px; background-color: #000000; margin: 30px 0; width: 60px; margin-left: auto; margin-right: auto;"></div>
 
                     <!-- Message -->
-                    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.5; color: #000000; text-align: center;">
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #000000; text-align: center;">
                         Você solicitou a <strong>redefinição de sua senha</strong> no sistema Prestige Motors.
                     </p>
 
-                    <p style="margin: 0 0 30px 0; font-size: 14px; line-height: 1.5; color: #000000; text-align: center;">
+                    <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #000000; text-align: center;">
                         Clique no botão abaixo para criar uma nova senha:
                     </p>
 
                     <!-- Call to Action Button -->
                     <div style="text-align: center; margin: 40px 0;">
                         <a href="${resetUrl}" 
-                           style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 32px; font-size: 14px; font-weight: 500; letter-spacing: 1px; border: 1px solid #000000;">
+                           style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 15px 40px; font-size: 16px; font-weight: 500; letter-spacing: 1px; border: 2px solid #000000;">
                             REDEFINIR SENHA
                         </a>
                     </div>
 
                     <!-- Security Info -->
-                    <div style="border: 1px solid #000000; padding: 20px; margin: 30px 0; background-color: #ffffff; text-align: center;">
-                        <p style="margin: 0; font-size: 12px; color: #000000;">
+                    <div style="border: 1px solid #000000; padding: 20px; margin: 30px 0; background-color: #f9f9f9;">
+                        <p style="margin: 0; font-size: 14px; color: #000000; text-align: center;">
                             <strong>Informações de Segurança:</strong><br>
                             Este link é válido por <strong>1 hora</strong><br>
                             Solicitado em: ${new Date().toLocaleString('pt-BR')}<br>
@@ -80,18 +117,18 @@ const createPasswordResetEmailTemplate = (resetUrl, userEmail) => {
                     </div>
 
                     <!-- Alternative Link -->
-                    <div style="margin: 30px 0; padding: 20px; background-color: #ffffff; border-left: 1px solid #000000; text-align: center;">
-                        <p style="margin: 0 0 10px 0; font-size: 12px; color: #000000; font-weight: 500;">
+                    <div style="margin: 30px 0; padding: 20px; background-color: #f5f5f5; border-left: 3px solid #000000;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #000000; font-weight: 500;">
                             Link alternativo:
                         </p>
-                        <p style="margin: 0; font-size: 12px; color: #000000; word-break: break-all; line-height: 1.4;">
+                        <p style="margin: 0; font-size: 12px; color: #666666; word-break: break-all; line-height: 1.4;">
                             <a href="${resetUrl}" style="color: #000000; text-decoration: underline;">${resetUrl}</a>
                         </p>
                     </div>
 
                     <!-- Security Warning -->
-                    <div style="margin: 30px 0; text-align: center;">
-                        <p style="margin: 0; font-size: 12px; color: #000000;">
+                    <div style="margin: 30px 0;">
+                        <p style="margin: 0; font-size: 14px; color: #666666; text-align: center;">
                             Se você <strong>não solicitou</strong> esta redefinição, ignore este email.<br>
                             Sua senha permanecerá inalterada.
                         </p>
@@ -100,11 +137,11 @@ const createPasswordResetEmailTemplate = (resetUrl, userEmail) => {
                 </div>
 
                 <!-- Footer -->
-                <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #000000;">
-                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #000000;">
+                <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #666666;">
                         Este é um email automático, não responda.
                     </p>
-                    <p style="margin: 0; font-size: 12px; color: #000000;">
+                    <p style="margin: 0; font-size: 12px; color: #666666;">
                         © ${currentYear} Prestige Motors - Sistema de Gerenciamento
                     </p>
                 </div>
@@ -140,17 +177,15 @@ Este é um email automático, não responda.
     };
 };
 
-// Função para validar formato de email
-const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-};
-
 const forgotPassword = async (req, res) => {
     try {
+        // Debug do campo FROM em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+            debugEmailFrom();
+        }
+
         const { email } = req.body;
         
-        // Validações básicas
         if (!email) {
             return res.status(400).json({ 
                 message: 'Email é obrigatório',
@@ -159,7 +194,8 @@ const forgotPassword = async (req, res) => {
         }
 
         // Validar formato do email
-        if (!validateEmail(email)) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
             return res.status(400).json({ 
                 message: 'Por favor, insira um email válido',
                 error: 'EMAIL_INVALID_FORMAT'
@@ -168,71 +204,68 @@ const forgotPassword = async (req, res) => {
         
         // Buscar usuário
         const user = await prisma.user.findUnique({
-            where: { email: email.toLowerCase() } // Normalizar email para lowercase
+            where: { email: email.toLowerCase() }
         });
         
         if (!user) {
-            // Por segurança, não informamos se o email existe ou não
-            // Mas retornamos sucesso para não dar dicas sobre emails válidos
             return res.status(200).json({ 
                 message: 'Se este email estiver registrado, você receberá um link de recuperação',
                 success: true
             });
         }
         
-        // Gerar token de redefinição (válido por 1 hora)
+        // Gerar token
         const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY);
+        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hora
         
-        // Armazenar token hash no banco
         const hashedToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
         
-        // Atualizar usuário com token de reset
+        // Atualizar usuário
         await prisma.user.update({
             where: { id: user.id },
             data: {
                 resetToken: hashedToken,
                 resetTokenExpiry,
-                // Opcional: Log da solicitação
                 updatedAt: new Date()
             }
         });
         
-        // URL de redefinição (front-end) - Atualizada para nova estrutura de rotas
+        // URL de redefinição
         const resetUrl = `${FRONTEND_URL}/passwords/reset/${resetToken}`;
         
-        // Enviar email com template minimalista
+        // Enviar email com FROM corrigido
         try {
             const emailTemplate = createPasswordResetEmailTemplate(resetUrl, user.email);
             
+            console.log('Tentando enviar email com FROM:', VALIDATED_EMAIL_FROM);
+            
             const emailResponse = await resend.emails.send({
-                from: EMAIL_FROM,
+                from: VALIDATED_EMAIL_FROM, // ← CORREÇÃO PRINCIPAL AQUI
                 to: [email],
                 subject: 'Prestige Motors - Redefinição de Senha',
                 html: emailTemplate.html,
                 text: emailTemplate.text
             });
             
-            // Log de sucesso com ID do email
-            console.log(`Email de reset enviado para ${email}. ID: ${emailResponse.id}`);
+            console.log(`Email enviado com sucesso. ID: ${emailResponse.id}`);
             
             res.status(200).json({ 
                 message: 'Email de redefinição enviado com sucesso',
                 success: true,
-                // Em desenvolvimento, retornar informações extras
                 ...(process.env.NODE_ENV === 'development' && {
                     emailId: emailResponse.id,
-                    resetToken: resetToken // APENAS EM DESENVOLVIMENTO!
+                    resetToken: resetToken,
+                    fromField: VALIDATED_EMAIL_FROM // Debug info
                 })
             });
             
         } catch (emailError) {
-            console.error('Erro ao enviar email de redefinição:', emailError);
+            console.error('Erro detalhado do Resend:', emailError);
             
-            // Reverter alterações no banco se o email falhar
+            // Reverter token se email falhar
             await prisma.user.update({
                 where: { id: user.id },
                 data: {
@@ -242,22 +275,18 @@ const forgotPassword = async (req, res) => {
             });
             
             res.status(500).json({ 
-                message: 'Não foi possível enviar o email de redefinição. Tente novamente.',
+                message: 'Não foi possível enviar o email. Verifique o endereço e tente novamente.',
                 error: 'EMAIL_SEND_FAILED',
-                details: process.env.NODE_ENV === 'development' ? emailError.message : undefined
+                details: process.env.NODE_ENV === 'development' ? {
+                    message: emailError.message,
+                    fromField: VALIDATED_EMAIL_FROM,
+                    resendError: emailError
+                } : undefined
             });
         }
         
     } catch (error) {
-        console.error('Erro no processo de recuperação de senha:', error);
-        
-        // Diferentes tipos de erro
-        if (error.code === 'P2025') {
-            return res.status(404).json({ 
-                message: 'Usuário não encontrado',
-                error: 'USER_NOT_FOUND'
-            });
-        }
+        console.error('Erro no processo de recuperação:', error);
         
         res.status(500).json({ 
             message: 'Erro interno do servidor',
@@ -267,30 +296,8 @@ const forgotPassword = async (req, res) => {
     }
 };
 
-// Função auxiliar para limpar tokens expirados (pode ser executada por cronjob)
-const cleanExpiredTokens = async () => {
-    try {
-        const result = await prisma.user.updateMany({
-            where: {
-                resetTokenExpiry: {
-                    lt: new Date() // Menor que agora (expirado)
-                }
-            },
-            data: {
-                resetToken: null,
-                resetTokenExpiry: null
-            }
-        });
-        
-        console.log(`${result.count} tokens expirados foram limpos`);
-        return result.count;
-    } catch (error) {
-        console.error('Erro ao limpar tokens expirados:', error);
-        return 0;
-    }
-};
-
 module.exports = {
     forgotPassword,
-    cleanExpiredTokens
+    validateAndFormatFromField, // Exportar para reutilizar
+    debugEmailFrom // Exportar para debug
 };

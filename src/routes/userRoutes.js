@@ -14,6 +14,8 @@ const {
     uploadAvatar,
     resetPassword,
     forgotPassword,
+    validateAndFormatFromField,
+    debugEmailFrom
 } = require('../modules/auth/authModule')
 
 const {
@@ -32,8 +34,8 @@ const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware')
 // Rotas públicas
 router.post('/register', register);
 router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', forgotPassword, validateAndFormatFromField, debugEmailFrom);
+router.post('/reset-password', resetPassword, validateAndFormatFromField);
 
 // Rotas de autenticação
 router.get('/check-session', authenticate, checkSession);
