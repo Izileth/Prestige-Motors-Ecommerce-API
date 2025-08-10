@@ -7,8 +7,39 @@ const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Configure com seu domínio verificado no Resend
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@prestigemotors.online';
+
+
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Prestige Motors <noreply@prestigemotors.online>';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://prestigemotors.online';
+
+const validateAndFormatFromField = () => {
+    let fromField = process.env.EMAIL_FROM;
+    
+    if (!fromField) {
+        // Valor padrão com nome e email
+        return 'Prestige Motors <noreply@prestigemotors.online>';
+    }
+    
+    // Limpar espaços extras
+    fromField = fromField.trim();
+    
+    // Verificar se já está no formato correto
+    const formatWithName = /^.+\s<.+@.+\..+>$/;
+    const formatEmailOnly = /^.+@.+\..+$/;
+    
+    if (formatWithName.test(fromField) || formatEmailOnly.test(fromField)) {
+        return fromField;
+    }
+    
+    // Se não está em formato válido, usar padrão
+    console.warn('EMAIL_FROM em formato inválido, usando padrão');
+    return 'Prestige Motors <noreply@prestigemotors.online>';
+};
+
+
+// Usar a função para obter o FROM correto
+const VALIDATED_EMAIL_FROM = validateAndFormatFromField();
+
 
 // Template de email minimalista monocromático
 const createPasswordChangedEmailTemplate = (userEmail) => {
@@ -206,7 +237,7 @@ const resetPassword = async (req, res) => {
             const emailTemplate = createPasswordChangedEmailTemplate(user.email);
             
             const emailResponse = await resend.emails.send({
-                from: EMAIL_FROM,
+                from: VALIDATED_EMAIL_FROM, // ← CORREÇÃO PRINCIPAL AQUI
                 to: [user.email],
                 subject: 'Prestige Motors - Senha Alterada com Sucesso',
                 html: emailTemplate.html,
