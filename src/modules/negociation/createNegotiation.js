@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const emailService = require('../../services/emailService'); // Ajuste o caminho conforme sua estrutura
 const prisma = new PrismaClient();
 
 const createNegotiation = async (req, res) => {
@@ -69,7 +70,7 @@ const createNegotiation = async (req, res) => {
                 }
             });
 
-            // ✅ 3. CRIAR REGISTRO DE HISTÓRICO - CRIAÇÃO DA NEGOCIAÇÃO
+            // 3. CRIAR REGISTRO DE HISTÓRICO - CRIAÇÃO DA NEGOCIAÇÃO
             const historyCreation = await tx.negotiationsHistory.create({
                 data: {
                     negociacaoId: negotiation.id,
@@ -88,7 +89,7 @@ const createNegotiation = async (req, res) => {
                 }
             });
 
-            // ✅ 4. CRIAR REGISTRO DE HISTÓRICO - PRIMEIRA OFERTA
+            // 4. CRIAR REGISTRO DE HISTÓRICO - PRIMEIRA OFERTA
             const historyOffer = await tx.negotiationsHistory.create({
                 data: {
                     negociacaoId: negotiation.id,
@@ -105,7 +106,7 @@ const createNegotiation = async (req, res) => {
             return { negotiation, message, historyCreation, historyOffer };
         });
 
-        // Buscar dados completos para resposta
+        // Buscar dados completos para resposta E para envio de email
         const negotiationWithDetails = await prisma.negociations.findUnique({
             where: { id: result.negotiation.id },
             include: {
@@ -120,23 +121,67 @@ const createNegotiation = async (req, res) => {
                 comprador: {
                     select: {
                         nome: true,
+                        email: true, // ✅ IMPORTANTE: Incluir email
                         avatar: true
                     }
                 },
                 vendedor: {
                     select: {
                         nome: true,
+                        email: true, // ✅ IMPORTANTE: Incluir email
                         avatar: true
                     }
                 }
             }
         });
 
+        try {
+            console.log('📧 Iniciando envio de emails...');
+            
+            const emailData = {
+                negotiationId: negotiationWithDetails.id,
+                comprador: negotiationWithDetails.comprador,
+                vendedor: negotiationWithDetails.vendedor,
+                vehicle: negotiationWithDetails.vehicle,
+                precoOfertado: parseFloat(precoOfertado),
+                precoSolicitado: negotiationWithDetails.vehicle.preco,
+                comentario
+            };
+
+            // Enviar emails (não bloqueia a resposta se falhar)
+            const emailResult = await emailService.sendNegotiationEmails(emailData);
+            
+            console.log('📧 Resultado dos emails:', {
+                buyerSent: !!emailResult.buyerEmail,
+                sellerSent: !!emailResult.sellerEmail,
+                errors: emailResult.errors.length
+            });
+
+        } catch (emailError) {
+      
+            console.error('⚠️ Erro no envio de emails (não crítico):', emailError);
+        }
+
         console.log('=== NEGOTIATION CREATED ===');
         console.log('Negotiation ID:', negotiationWithDetails.id);
         console.log('History records created:', 2);
+        console.log('Emails sent: Attempting...');
 
-        res.status(201).json(negotiationWithDetails);
+        // Remover emails da resposta por segurança
+        const responseData = {
+            ...negotiationWithDetails,
+            comprador: {
+                nome: negotiationWithDetails.comprador.nome,
+                avatar: negotiationWithDetails.comprador.avatar
+            },
+            vendedor: {
+                nome: negotiationWithDetails.vendedor.nome,
+                avatar: negotiationWithDetails.vendedor.avatar
+            }
+        };
+
+        res.status(201).json(responseData);
+        
     } catch (error) {
         console.error('=== CREATE NEGOTIATION ERROR ===');
         console.error(error);
