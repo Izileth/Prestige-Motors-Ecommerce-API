@@ -211,8 +211,6 @@ Este é um email automático, não responda.
   }
 }
 
-export default createPasswordResetEmailTemplate
-
 
 const forgotPassword = async (req, res) => {
     try {

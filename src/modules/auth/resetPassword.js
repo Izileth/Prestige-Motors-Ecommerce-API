@@ -184,8 +184,6 @@ Este é um email automático, não responda.
   }
 }
 
-export default createPasswordChangedEmailTemplate
-
 const resetPassword = async (req, res) => {
     try {
         const { token, password, confirmPassword } = req.body; // Alterado de newPassword para password para consistência
