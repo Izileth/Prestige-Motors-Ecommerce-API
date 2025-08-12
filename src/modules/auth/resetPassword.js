@@ -43,10 +43,10 @@ const VALIDATED_EMAIL_FROM = validateAndFormatFromField();
 
 // Template de email minimalista monocromático
 const createPasswordChangedEmailTemplate = (userEmail) => {
-    const currentYear = new Date().getFullYear();
-    
-    return {
-        html: `
+  const currentYear = new Date().getFullYear()
+
+  return {
+    html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -54,71 +54,104 @@ const createPasswordChangedEmailTemplate = (userEmail) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Senha Alterada - Prestige Motors</title>
         </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff; color: #000000;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); color: #1a1a1a; line-height: 1.6;">
+            <div style="max-width: 560px; margin: 0 auto; padding: 60px 20px;">
                 
                 <!-- Header -->
-                <div style="text-align: center; margin-bottom: 40px;">
-                    <div style="border: 2px solid #000000; display: inline-block; padding: 12px 24px;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: 400; letter-spacing: 2px;">
-                            PRESTIGE MOTORS
+                <div style="text-align: center; margin-bottom: 60px;">
+                    <div style="display: inline-block; position: relative;">
+                        <h1 style="margin: 0; font-size: 32px; font-weight: 200; letter-spacing: 8px; color: #000000; text-transform: uppercase;">
+                            Prestige
                         </h1>
+                        <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent 0%, #000000 50%, transparent 100%); margin-top: 8px;"></div>
+                        <p style="margin: 12px 0 0 0; font-size: 11px; font-weight: 400; letter-spacing: 3px; color: #666666; text-transform: uppercase;">
+                            Motors
+                        </p>
                     </div>
                 </div>
 
-                <!-- Main Content -->
-                <div style="border: 1px solid #000000; padding: 40px 30px; background-color: #ffffff;">
+                <!-- Main Content Card -->
+                <div style="background: #ffffff; border-radius: 16px; padding: 50px 40px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); position: relative; overflow: hidden;">
                     
-                    <!-- Success Icon -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="width: 60px; height: 60px; border: 2px solid #000000; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background-color: #000000;">
-                            <span style="color: #ffffff; font-size: 24px; font-weight: bold;">✓</span>
+                    <!-- Background Pattern -->
+                    <div style="position: absolute; top: 0; right: 0; width: 120px; height: 120px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 0 16px 0 100%; opacity: 0.3;"></div>
+                    
+                    <!-- Custom Success Icon -->
+                    <div style="text-align: center; margin-bottom: 40px; position: relative; z-index: 1;">
+                        <div style="width: 80px; height: 80px; margin: 0 auto; position: relative;">
+                            <!-- Outer Circle -->
+                            <div style="width: 80px; height: 80px; border: 3px solid #000000; border-radius: 50%; position: absolute; top: 0; left: 0; background: #ffffff;"></div>
+                            <!-- Inner Success Shape -->
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                <!-- Custom Checkmark made with geometric shapes -->
+                                <div style="width: 24px; height: 12px; border-left: 4px solid #000000; border-bottom: 4px solid #000000; transform: rotate(-45deg); margin-top: -6px;"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Title -->
-                    <h2 style="margin: 0 0 20px 0; font-size: 28px; font-weight: 300; text-align: center; color: #000000;">
-                        Senha Alterada
-                    </h2>
+                    <!-- Title Hierarchy -->
+                    <div style="text-align: center; margin-bottom: 50px;">
+                        <h2 style="margin: 0 0 16px 0; font-size: 36px; font-weight: 100; color: #000000; letter-spacing: 2px;">
+                            Senha Alterada
+                        </h2>
+                        <div style="width: 40px; height: 2px; background: #000000; margin: 0 auto;"></div>
+                    </div>
 
-                    <!-- Divider -->
-                    <div style="height: 1px; background-color: #000000; margin: 30px 0; width: 60px; margin-left: auto; margin-right: auto;"></div>
-
-                    <!-- Message -->
-                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #000000; text-align: center;">
-                        Sua senha foi <strong>alterada com sucesso</strong> no sistema Prestige Motors.
-                    </p>
-
-                    <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #000000; text-align: center;">
-                        Se você não fez esta alteração, entre em contato conosco imediatamente.
-                    </p>
-
-                    <!-- Security Info -->
-                    <div style="border: 1px solid #000000; padding: 20px; margin: 30px 0; background-color: #f9f9f9;">
-                        <p style="margin: 0; font-size: 14px; color: #000000; text-align: center;">
-                            <strong>Informações de Segurança:</strong><br>
-                            Data: ${new Date().toLocaleDateString('pt-BR')}<br>
-                            Horário: ${new Date().toLocaleTimeString('pt-BR')}<br>
-                            E-mail: ${userEmail}
+                    <!-- Message Content -->
+                    <div style="margin-bottom: 40px;">
+                        <p style="margin: 0 0 24px 0; font-size: 18px; font-weight: 400; color: #1a1a1a; text-align: center; line-height: 1.7;">
+                            Sua senha foi <span style="font-weight: 600; color: #000000;">alterada com sucesso</span> no sistema Prestige Motors.
+                        </p>
+                        
+                        <p style="margin: 0; font-size: 16px; font-weight: 400; color: #4a4a4a; text-align: center; line-height: 1.6;">
+                            Se você não fez esta alteração, entre em contato conosco imediatamente.
                         </p>
                     </div>
 
+                    <!-- Security Information -->
+                    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 0px; padding: 32px; margin: 40px 0; border-left: 4px solid #000000; position: relative;">
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #000000; text-transform: uppercase; letter-spacing: 1px;">
+                                Informações de Segurança
+                            </h3>
+                        </div>
+                        
+                        <div style="display: table; width: 100%;">
+                            <div style="display: table-row;">
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #666666; width: 80px;">Data:</div>
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 500;">${new Date().toLocaleDateString("pt-BR")}</div>
+                            </div>
+                            <div style="display: table-row;">
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #666666;">Horário:</div>
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 500;">${new Date().toLocaleTimeString("pt-BR")}</div>
+                            </div>
+                            <div style="display: table-row;">
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #666666;">E-mail:</div>
+                                <div style="display: table-cell; padding: 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 500;">${userEmail}</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Call to Action -->
-                    <div style="text-align: center; margin: 40px 0 20px 0;">
-                        <a href="${FRONTEND_URL}/login" 
-                           style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 15px 40px; font-size: 16px; font-weight: 500; letter-spacing: 1px; border: 2px solid #000000; transition: all 0.3s ease;">
-                            FAZER LOGIN
+                    <div style="text-align: center; margin: 50px 0 20px 0;">
+                        <a href="\${FRONTEND_URL}/login" 
+                           style="display: inline-block; background: #000000; color: #ffffff; text-decoration: none; padding: 18px 48px; font-size: 14px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);">
+                            Fazer Login
                         </a>
                     </div>
 
                 </div>
 
                 <!-- Footer -->
-                <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
-                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #666666;">
+                <div style="text-align: center; margin-top: 60px;">
+                    <div style="margin-bottom: 20px;">
+                        <div style="width: 60px; height: 1px; background: linear-gradient(90deg, transparent 0%, #cccccc 50%, transparent 100%); margin: 0 auto;"></div>
+                    </div>
+                    
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #999999; font-weight: 400;">
                         Este é um email automático, não responda.
                     </p>
-                    <p style="margin: 0; font-size: 12px; color: #666666;">
+                    <p style="margin: 0; font-size: 11px; color: #cccccc; font-weight: 300; letter-spacing: 1px;">
                         © ${currentYear} Prestige Motors - Sistema de Gerenciamento
                     </p>
                 </div>
@@ -127,8 +160,8 @@ const createPasswordChangedEmailTemplate = (userEmail) => {
         </body>
         </html>
         `,
-        
-        text: `
+
+    text: `
 PRESTIGE MOTORS
 ================
 
@@ -139,17 +172,19 @@ Sua senha foi alterada com sucesso no sistema Prestige Motors.
 Se você não fez esta alteração, entre em contato conosco imediatamente.
 
 INFORMAÇÕES DE SEGURANÇA:
-Data: ${new Date().toLocaleDateString('pt-BR')}
-Horário: ${new Date().toLocaleTimeString('pt-BR')}
+Data: ${new Date().toLocaleDateString("pt-BR")}
+Horário: ${new Date().toLocaleTimeString("pt-BR")}
 E-mail: ${userEmail}
 
-Acesse sua conta: ${FRONTEND_URL}/login
+Acesse sua conta: \${FRONTEND_URL}/login
 
 Este é um email automático, não responda.
 © ${currentYear} Prestige Motors - Sistema de Gerenciamento
-        `
-    };
-};
+        `,
+  }
+}
+
+export default createPasswordChangedEmailTemplate
 
 const resetPassword = async (req, res) => {
     try {
