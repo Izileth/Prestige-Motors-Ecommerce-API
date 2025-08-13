@@ -9,6 +9,10 @@ const cookieParser = require('cookie-parser');
 const {preventDuplicates} = require('./middleware/cacheSizeMiddleware');
 const {errorMiddleware} = require('./utils/errorHandler');
 
+const { initializeNegotiationCleanup } = require('./modules/negociation/deleteNegotiation');
+
+initializeNegotiationCleanup();
+
 const app = express();
 
 // 1. CORS deve vir ANTES de outros middlewares

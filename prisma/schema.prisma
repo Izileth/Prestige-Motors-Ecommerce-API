@@ -202,6 +202,7 @@ model Negociations{
   updatedAt         DateTime     @updatedAt
   motivoRecusa      String?
   dataFechamento    DateTime?
+  deleteScheduledAt DateTime? 
   
   historico NegotiationsHistory[] 
   
@@ -212,6 +213,7 @@ model Negociations{
 
   tempoMedioResposta Int?       
 
+  @@map("negociations")
 
   @@index([compradorId, status, updatedAt])
   @@index([vendedorId, status, updatedAt])
