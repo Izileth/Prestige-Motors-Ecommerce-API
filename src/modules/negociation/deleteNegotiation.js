@@ -1,3 +1,4 @@
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const cron = require('node-cron');
@@ -147,24 +148,40 @@ class NegotiationScheduler {
     }
     
     start() {
-        // Roda a cada hora (você pode ajustar conforme necessário)
-        // Formato cron: minuto hora dia mês dia-da-semana
-        const cronPattern = process.env.CLEANUP_CRON_PATTERN || '0 * * * *'; // A cada hora
-        
-        console.log(`Starting negotiation cleanup scheduler with pattern: ${cronPattern}`);
-        
-        this.job = cron.schedule(cronPattern, async () => {
-            try {
-                await this.cleanupService.deleteExpiredNegotiations();
-            } catch (error) {
-                console.error('Scheduled cleanup failed:', error);
+        try {
+            // Roda a cada hora (você pode ajustar conforme necessário)
+            // Formato cron: minuto hora dia mês dia-da-semana
+            const cronPattern = process.env.CLEANUP_CRON_PATTERN || '0 * * * *'; // A cada hora
+            
+            console.log(`Starting negotiation cleanup scheduler with pattern: ${cronPattern}`);
+            
+            // Valida o padrão cron antes de usar
+            if (!cron.validate(cronPattern)) {
+                console.error(`Invalid cron pattern: ${cronPattern}. Using default pattern.`);
+                const defaultPattern = '0 * * * *';
+                console.log(`Using default pattern: ${defaultPattern}`);
             }
-        }, {
-            scheduled: true,
-            timezone: process.env.TZ || 'America/Sao_Paulo'
-        });
-        
-        console.log('Negotiation cleanup scheduler started');
+            
+            const validPattern = cron.validate(cronPattern) ? cronPattern : '0 * * * *';
+            
+            // Remove timezone para evitar problemas em produção
+            this.job = cron.schedule(validPattern, async () => {
+                try {
+                    console.log('Running scheduled negotiation cleanup...');
+                    await this.cleanupService.deleteExpiredNegotiations();
+                } catch (error) {
+                    console.error('Scheduled cleanup failed:', error);
+                }
+            }, {
+                scheduled: true
+                // Removido timezone para evitar problemas em produção
+            });
+            
+            console.log('Negotiation cleanup scheduler started successfully');
+        } catch (error) {
+            console.error('Failed to start negotiation cleanup scheduler:', error);
+            console.log('Scheduler will not run, but manual cleanup is still available');
+        }
     }
     
     stop() {
@@ -206,18 +223,26 @@ const scheduler = new NegotiationScheduler();
 
 // Inicia o scheduler quando o servidor subir
 const initializeNegotiationCleanup = () => {
-    scheduler.start();
-    
-    // Graceful shutdown
-    process.on('SIGTERM', () => {
-        console.log('SIGTERM received, stopping scheduler...');
-        scheduler.stop();
-    });
-    
-    process.on('SIGINT', () => {
-        console.log('SIGINT received, stopping scheduler...');
-        scheduler.stop();
-    });
+    try {
+        console.log('Initializing negotiation cleanup system...');
+        scheduler.start();
+        
+        // Graceful shutdown
+        process.on('SIGTERM', () => {
+            console.log('SIGTERM received, stopping scheduler...');
+            scheduler.stop();
+        });
+        
+        process.on('SIGINT', () => {
+            console.log('SIGINT received, stopping scheduler...');
+            scheduler.stop();
+        });
+        
+        console.log('Negotiation cleanup system initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize negotiation cleanup system:', error);
+        console.log('Application will continue without automatic cleanup. Manual cleanup is still available.');
+    }
 };
 
 module.exports = {
