@@ -1,10 +1,10 @@
+// config/multer.js
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-
 const cloudinary = require('cloudinary').v2;
 
-
-const storage = new CloudinaryStorage({
+// Configuração para AVATARES (upload direto para Cloudinary)
+const avatarStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'prestige-motors/avatars',
@@ -18,9 +18,12 @@ const storage = new CloudinaryStorage({
             console.log(`📁 Gerando public_id para usuário: ${userId}`);
             return `avatar_${userId}`;
         },
-        overwrite: true // Substitui avatar anterior automaticamente
+        overwrite: true
     },
 });
+
+// Configuração para VEÍCULOS (armazena em memória para processamento manual)
+const vehicleStorage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
@@ -31,14 +34,29 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({
-    storage: storage,
+// Upload para AVATARES
+const uploadAvatar = multer({
+    storage: avatarStorage,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
-        // Removido o limite de files: 1 para permitir múltiplos arquivos
+        files: 1
     },
-    preservePath: true,
     fileFilter: fileFilter
 });
 
-module.exports = upload; // Exportando como CommonJS
+// Upload para VEÍCULOS (mantém buffer para processamento manual)
+const uploadVehicle = multer({
+    storage: vehicleStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+        files: 10 // Permite até 10 arquivos
+    },
+    fileFilter: fileFilter
+});
+
+module.exports = {
+    uploadAvatar,
+    uploadVehicle,
+    // Manter compatibilidade com código existente
+    upload: uploadVehicle // Para não quebrar as rotas existentes
+};

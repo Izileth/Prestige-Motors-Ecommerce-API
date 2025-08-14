@@ -1,7 +1,8 @@
+// routes/vehicleRoutes.js
 const express = require('express');
 const router = express.Router();
 
-// Importação de módulos
+// Importação de módulos (mantém o mesmo)
 const {
     createReview,
     getVehicleReviews,
@@ -30,7 +31,7 @@ const {
     removeVehicleAddress
 } = require('../modules/vehicles/vehicleModule');
 
-const {uploadVehicleImages,deleteVehicleImage, uploadVehicleVideos} = require('../modules/uploads/uploadModule')
+const {uploadVehicleImages, deleteVehicleImage, uploadVehicleVideos} = require('../modules/uploads/uploadModule');
 
 const {
     registerView,
@@ -40,7 +41,7 @@ const {
 
 // Middlewares
 const { authenticate, authorize } = require('../middleware/authMiddleware');
-const upload = require('../config/multer'); // Middleware do Multer
+const { uploadVehicle } = require('../config/multer'); // MUDANÇA AQUI: usar uploadVehicle
 const {uploadMiddleware} = require('../middleware/uploadMiddleware');
 
 // ================ ROTAS PÚBLICAS ================
@@ -52,14 +53,13 @@ router.get('/:id/details', getVehicleDetails);
 router.get('/vendors/:vendorId', getVehiclesByVendor);
 router.get('/:vehicleId/address', getVehicleAddress);
 
-
 // ================ ROTAS AUTENTICADAS ================
 
 // Rota para criação de veículo com suporte para upload de imagens
 router.post('/', 
     authenticate, 
     authorize(['USER', 'ADMIN']), 
-    upload.array('images', 10), // Suporte para até 10 imagens
+    uploadVehicle.array('images', 10), // MUDANÇA AQUI: usar uploadVehicle
     uploadMiddleware,
     createVehicle
 );
@@ -68,16 +68,14 @@ router.post('/',
 router.post('/:id/images', 
     authenticate, 
     authorize(['USER', 'ADMIN']),
-    upload.array('images', 10),
+    uploadVehicle.array('images', 10), // MUDANÇA AQUI: usar uploadVehicle
     uploadVehicleImages
 );
 
-// NOVA ROTA: Remover imagem específica de um veículo
-
-
+// Rota para remover imagem específica de um veículo
 router.delete('/:id/images',
-    authenticate,  // Comment this out temporarily if you're having auth issues during testing
-    authorize(['USER', 'ADMIN']),  // Comment this out temporarily if you're having auth issues during testing
+    authenticate,
+    authorize(['USER', 'ADMIN']),
     deleteVehicleImage
 );
 
@@ -85,18 +83,16 @@ router.delete('/:id/images',
 router.post('/:id/videos', 
     authenticate,
     authorize(['USER', 'ADMIN']),
-    upload.single('video'), // Assumindo um vídeo por vez
+    uploadVehicle.single('video'), // MUDANÇA AQUI: usar uploadVehicle
     uploadVehicleVideos
 );
 
-// Outras rotas autenticadas
+// Outras rotas autenticadas (mantém o mesmo)
 router.get('/favorites', authenticate, getVehicleFavorites);
 router.post('/:id/views', registerView);
 router.post('/:id/favorites', authenticate, addFavoriteVehicle);
 router.post('/:id/reviews', authenticate, createReview);
-
 router.post('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
-
 
 // ================ ROTAS DO USUÁRIO ATUAL ================
 router.get('/me/vehicles', authenticate, getUserVehicles);
@@ -108,7 +104,7 @@ router.get('/me/vehicle-stats', authenticate, getUserVehicleStats);
 router.put('/:id', 
     authenticate, 
     authorize(['USER', 'ADMIN']),
-    upload.array('images', 10), // Permitir upload também na atualização
+    uploadVehicle.array('images', 10), // MUDANÇA AQUI: usar uploadVehicle
     uploadMiddleware,
     updateVehicle
 );
@@ -116,7 +112,7 @@ router.put('/:id',
 router.put('/:id/status', authenticate, authorize(['USER', 'ADMIN']), updateVehicleStatus);
 router.put('/reviews/:reviewId', authenticate, authorize(['USER', 'ADMIN']), updateReview);
 router.put('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), addOrUpdateVehicleAddress);
-router.delete('/reviews/:reviewId', authenticate,  authorize(['USER', 'ADMIN']), deleteReview);
+router.delete('/reviews/:reviewId', authenticate, authorize(['USER', 'ADMIN']), deleteReview);
 router.delete('/:vehicleId/address', authenticate, authorize(['USER', 'ADMIN']), removeVehicleAddress);
 router.delete('/:id', authenticate, authorize(['USER', 'ADMIN']), deleteVehicle);
 router.delete('/:id/favorites', authenticate, removeFavoriteVehicle);
