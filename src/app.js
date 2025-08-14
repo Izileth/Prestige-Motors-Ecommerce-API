@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 
 const {preventDuplicates} = require('./middleware/cacheSizeMiddleware');
 const {errorMiddleware} = require('./utils/errorHandler');
+const {routeLogger} = require('./middleware/routerLogger');
 
 const { initializeNegotiationCleanup } = require('./modules/negociation/deleteNegotiation');
 
@@ -91,6 +92,7 @@ app.use(express.json());
 // 4. Middleware personalizado (movido para depois do CORS)
 app.use(preventDuplicates.default);
 app.use(errorMiddleware);
+app.use(routeLogger);
 
 // 5. Rate Limiting
 app.use(rateLimit({

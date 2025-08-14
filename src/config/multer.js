@@ -1,6 +1,26 @@
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const storage = multer.memoryStorage();
+const cloudinary = require('cloudinary').v2;
+
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'prestige-motors/avatars',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg'],
+        transformation: [
+            { width: 300, height: 300, crop: 'fill', gravity: 'face' },
+            { quality: 'auto:good' }
+        ],
+        public_id: (req, file) => {
+            const userId = req.params.id;
+            console.log(`📁 Gerando public_id para usuário: ${userId}`);
+            return `avatar_${userId}`;
+        },
+        overwrite: true // Substitui avatar anterior automaticamente
+    },
+});
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];

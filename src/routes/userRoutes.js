@@ -11,7 +11,6 @@ const {
     register,
     login,
     logout,
-    uploadAvatar,
     resetPassword,
     forgotPassword,
     validateAndFormatFromField,
@@ -26,11 +25,15 @@ const {
     getUserStats,
     updateUser,
     deleteUser,
-
+    uploadAvatar,
+    deleteUserAvatar
 } = require('../modules/users/userModule')
 const { authenticate, authorize, checkSession } = require('../middleware/authMiddleware');
 
-const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware')
+const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware');
+const upload = require('../config/multer');
+
+
 
 // Rotas públicas
 router.post('/register', register);
@@ -61,6 +64,7 @@ router.delete('/addresses/:addressId', authenticate, authorize(['USER', 'ADMIN']
 
 
 // Upload de avatar
-router.post('/:id/avatar', authenticate, uploadAvatar);
+router.post('/:id/avatar', authenticate, upload.single('avatar'), uploadAvatar);
+router.delete('/:id/avatar', authenticate, deleteUserAvatar);
 
 module.exports = router;

@@ -8,7 +8,7 @@ cloudinary.config({
 });
 
 // Função para fazer upload de uma única imagem (adaptada para buffer do Multer)
-    const uploadImage = (fileBuffer) => {
+const uploadImage = (fileBuffer) => {
     return new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
         {
@@ -21,6 +21,42 @@ cloudinary.config({
         }
         ).end(fileBuffer);
     });
+};
+
+// ADICIONE ESTAS FUNÇÕES PARA AVATAR:
+
+// Função específica para upload de avatar
+const uploadAvatar = (fileBuffer, userId) => {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+        {
+            resource_type: 'image',
+            folder: 'prestige-motors/avatars', // Pasta específica para avatars
+            public_id: `avatar_${userId}`, // Nome único baseado no ID do usuário
+            transformation: [
+                { width: 300, height: 300, crop: 'fill', gravity: 'face' }, // Redimensiona para 300x300 focando no rosto
+                { quality: 'auto:good' } // Otimização automática
+            ],
+            overwrite: true // Substitui o avatar anterior automaticamente
+        },
+        (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+        }
+        ).end(fileBuffer);
+    });
+};
+
+// Função para deletar avatar específico
+const deleteAvatar = async (userId) => {
+    try {
+        const publicId = `prestige-motors/avatars/avatar_${userId}`;
+        const result = await cloudinary.uploader.destroy(publicId);
+        return result;
+    } catch (error) {
+        console.error('Erro ao deletar avatar:', error);
+        throw error;
+    }
 };
 
 const uploadImages = async (files) => {
@@ -57,6 +93,8 @@ const deleteImages = async (publicIds) => {
 
 module.exports = { 
     uploadImage,
-    uploadImages ,
-    deleteImages 
+    uploadImages,
+    deleteImages,
+    uploadAvatar,    // ADICIONE ESTA LINHA
+    deleteAvatar     // ADICIONE ESTA LINHA
 };

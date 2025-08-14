@@ -226,19 +226,7 @@ const register = async (req, res) => {
     }
 };
 
-const uploadAvatar = async (req, res) => {
-    const { id } = req.params;
-    const avatarUrl = req.file.path; // Após upload via multer+Cloudinary
-    
-    await prisma.user.update({
-        where: { id },
-        data: { avatar: avatarUrl }
-    });
-
-    res.json({ avatarUrl });
-};
 
 module.exports ={
     register,
-    uploadAvatar,
 }

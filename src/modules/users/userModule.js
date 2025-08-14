@@ -6,11 +6,15 @@ const {deleteUser} = require('./deleteUser')
 const {getUserStats} = require('./getUserStats')
 const {getUserAddresses} = require('./getUserAddress')
 
+const {uploadAvatar, deleteUserAvatar} = require('./getUserAvatar')
+
 module.exports = {
     getUsers,
     getUserById,
     updateUser,
     deleteUser,
     getUserStats,
-    getUserAddresses
+    getUserAddresses,
+    uploadAvatar, 
+    deleteUserAvatar
 }
