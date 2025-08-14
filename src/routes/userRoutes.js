@@ -31,7 +31,7 @@ const {
 const { authenticate, authorize, checkSession } = require('../middleware/authMiddleware');
 
 const { getUserStatsWithTimeout } = require('../middleware/timeoutMiddleware');
-const upload = require('../config/multer');
+const {uploadUserAvatar} = require('../config/multer');
 
 
 
@@ -64,7 +64,7 @@ router.delete('/addresses/:addressId', authenticate, authorize(['USER', 'ADMIN']
 
 
 // Upload de avatar
-router.post('/:id/avatar', authenticate, upload.single('avatar'), uploadAvatar);
+router.post('/:id/avatar', authenticate, uploadUserAvatar.single('avatar'), uploadAvatar);
 router.delete('/:id/avatar', authenticate, deleteUserAvatar);
 
 module.exports = router;

@@ -35,7 +35,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Upload para AVATARES
-const uploadAvatar = multer({
+const uploadUserAvatar = multer({
     storage: avatarStorage,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
@@ -55,7 +55,7 @@ const uploadVehicle = multer({
 });
 
 module.exports = {
-    uploadAvatar,
+    uploadUserAvatar,
     uploadVehicle,
     // Manter compatibilidade com código existente
     upload: uploadVehicle // Para não quebrar as rotas existentes
