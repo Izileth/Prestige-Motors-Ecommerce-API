@@ -1,7 +1,7 @@
-const { PrismaClient} = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
+const redisClient = require('../../config/redis');
 
 const prisma = new PrismaClient();
-
 
 const ENUM_MAPPINGS = {
     combustivel: {
@@ -106,8 +106,6 @@ const ENUM_MAPPINGS = {
     }
 };
 
-
-
 const sanitizeEnum = (value, enumType) => {
     if (!value) return undefined;
     
@@ -134,9 +132,15 @@ const sanitizeNumber = (value, min, max) => {
   return isNaN(num) ? undefined : Math.max(min, Math.min(max, num));
 };
 
-
 const getVehicles = async (req, res) => {
     try {
+        const cacheKey = `vehicles:${JSON.stringify(req.query)}`;
+        const cachedData = await redisClient.get(cacheKey);
+
+        if (cachedData) {
+            return res.json(JSON.parse(cachedData));
+        }
+
         const {
             page = 1,
             limit = 100,
@@ -361,7 +365,7 @@ const getVehicles = async (req, res) => {
 
         const totalPages = Math.ceil(totalCount / limitNum);
 
-        res.json({
+        const response = {
             data: vehicles,
             meta: {
                 currentPage: pageNum,
@@ -377,7 +381,13 @@ const getVehicles = async (req, res) => {
                     ...(carroceria && { carroceria: where.carroceria || 'invalid' })
                 }
             }
+        };
+
+        await redisClient.set(cacheKey, JSON.stringify(response), {
+            EX: 3600 // Cache for 1 hour
         });
+
+        res.json(response);
     } catch (error) {
         console.error('Erro ao buscar veículos:', error);
         res.status(500).json({ 
@@ -385,10 +395,7 @@ const getVehicles = async (req, res) => {
             ...(process.env.NODE_ENV === 'development' && { error: error.message })
         });
     }
-
-    
 };
-
 
 module.exports = {
     getVehicles
