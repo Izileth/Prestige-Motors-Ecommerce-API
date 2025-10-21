@@ -1,13 +1,12 @@
 
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
-// Cache simples em memória para stats
+// Cache em memória para estatísticas
 const statsCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
-// Função para limpar cache expirado
+// Limpeza de cache expirado
 const clearExpiredCache = () => {
     const now = Date.now();
     for (const [key, value] of statsCache.entries()) {
@@ -16,154 +15,98 @@ const clearExpiredCache = () => {
         }
     }
 };
-
-// Limpar cache expirado a cada 10 minutos
 setInterval(clearExpiredCache, 10 * 60 * 1000);
 
-// Função para tratar erros do Prisma
+// Tratamento de erros do Prisma
 function handlePrismaError(error, res) {
     console.error('Erro do Prisma:', error);
+    if (res.headersSent) return;
+
+    const errorMap = {
+        'P2002': { status: 400, message: 'Violação de unicidade' },
+        'P2025': { status: 404, message: 'Registro não encontrado' },
+        'P1001': { status: 500, message: 'Erro de conexão com banco de dados' },
+    };
+    const errorResponse = errorMap[error.code] || { status: 400, message: `Erro do Prisma: ${error.message}` };
     
-    // Verificar se a resposta já foi enviada
-    if (res.headersSent) {
-        console.error('Tentativa de enviar resposta dupla impedida');
-        return;
-    }
-    
-    if (error.code) {
-        // Erros específicos do Prisma
-        switch (error.code) {
-            case 'P2002':
-                return res.status(400).json({ 
-                    message: 'Violação de unicidade', 
-                    code: error.code 
-                });
-            case 'P2025':
-                return res.status(404).json({ 
-                    message: 'Registro não encontrado', 
-                    code: error.code 
-                });
-            case 'P1001':
-                return res.status(500).json({ 
-                    message: 'Erro de conexão com banco de dados', 
-                    code: error.code 
-                });
-            default:
-                return res.status(400).json({ 
-                    message: `Erro do Prisma: ${error.message}`, 
-                    code: error.code 
-                });
-        }
-    }
-    
-    return res.status(500).json({ 
-        message: 'Erro interno do servidor', 
-        error: error.message 
-    });
+    return res.status(errorResponse.status).json({ message: errorResponse.message, code: error.code });
 }
+
+// Funções de Estatísticas Adicionais
+const getAdditionalStats = async (userId) => {
+    const [
+        vehicleTimeline, 
+        priceDistribution, 
+        brandDistribution, 
+        statusDistribution, 
+        categoryDistribution,
+        salesStats,
+        negotiationStats
+    ] = await Promise.all([
+        // Timeline de Veículos
+        prisma.vehicle.groupBy({ by: ['createdAt'], where: { vendedorId: userId }, _count: { id: true }, orderBy: { createdAt: 'asc' } }),
+        // Distribuição de Preços
+        prisma.vehicle.groupBy({ by: ['preco'], where: { vendedorId: userId }, _count: { id: true } }),
+        // Distribuição de Marcas
+        prisma.vehicle.groupBy({ by: ['marca'], where: { vendedorId: userId }, _count: { id: true }, orderBy: { _count: { id: 'desc' } } }),
+        // Distribuição de Status
+        prisma.vehicle.groupBy({ by: ['status'], where: { vendedorId: userId }, _count: { id: true } }),
+        // Distribuição de Categoria
+        prisma.vehicle.groupBy({ by: ['categoria'], where: { vendedorId: userId }, _count: { id: true }, orderBy: { _count: { id: 'desc' } } }),
+        // Estatísticas de Vendas
+        prisma.sale.aggregate({ where: { vendedorId: userId }, _sum: { precoVenda: true }, _count: { id: true } }),
+        // Estatísticas de Negociações
+        prisma.negociations.aggregate({ where: { vendedorId: userId }, _count: { id: true } }),
+    ]);
+
+    return {
+        vehicleTimeline,
+        priceDistribution,
+        brandDistribution,
+        statusDistribution,
+        categoryDistribution,
+        salesStats: {
+            totalSalesValue: salesStats._sum.precoVenda || 0,
+            totalVehiclesSold: salesStats._count.id || 0,
+        },
+        negotiationStats: {
+            totalNegotiations: negotiationStats._count.id || 0,
+        },
+    };
+};
 
 const getUserStats = async (req, res) => {
     try {
-        console.log('=== INÍCIO getUserStats ===');
-        
-        // Verificar se req e res existem
-        if (!req || !res) {
-            console.error('req ou res não definidos');
-            return;
-        }
-        
         const { id } = req.params;
-        console.log('ID recebido:', id);
-        
-        // Verificar cache primeiro
         const cacheKey = `user_stats_${id}`;
+        
         const cached = statsCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
-            console.log('Retornando dados do cache');
             return res.json(cached.data);
         }
 
-        // Validar o ID
-        if (!id || typeof id !== 'string') {
-            console.log('ID inválido:', id);
-            if (!res.headersSent) {
-                return res.status(400).json({ message: 'ID inválido' });
-            }
-            return;
-        }
+        if (!id || typeof id !== 'string') return res.status(400).json({ message: 'ID inválido' });
+        if (!req.user || !req.user.id) return res.status(401).json({ message: 'Usuário não autenticado' });
 
-        // Validar req.user
-        if (!req.user || !req.user.id || !req.user.role) {
-            console.log('req.user não definido ou incompleto:', req.user);
-            if (!res.headersSent) {
-                return res.status(401).json({ message: 'Usuário não autenticado' });
-            }
-            return;
-        }
-
-        // Verificar se o usuário existe
-        console.log('Verificando existência do usuário...');
-        const userExists = await prisma.user.findUnique({
-            where: { id },
-            select: { id: true },
-        });
-        console.log('Resultado da verificação:', userExists);
-
-        if (!userExists) {
-            console.log('Usuário não encontrado');
-            if (!res.headersSent) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
-            }
-            return;
-        }
-
-        // Verificar permissões
-        console.log('Verificando permissões...', { 
-            userId: req.user.id, 
-            role: req.user.role,
-            targetId: id 
-        });
-        
         if (req.user.id !== id && req.user.role !== 'ADMIN') {
-            console.log('Acesso negado');
-            if (!res.headersSent) {
-                return res.status(403).json({ message: 'Acesso negado' });
-            }
-            return;
+            return res.status(403).json({ message: 'Acesso negado' });
         }
 
-        // Buscar dados em paralelo para melhor performance
-        console.log('Buscando dados do usuário...');
-        const [totalVehicles, vehicleStats] = await Promise.all([
-            // Contar veículos
-            prisma.vehicle.count({
-                where: { vendedorId: id },
-            }),
-            // Estatísticas
+        const [userExists, totalVehicles, vehicleStats, additionalStats] = await Promise.all([
+            prisma.user.findUnique({ where: { id }, select: { id: true } }),
+            prisma.vehicle.count({ where: { vendedorId: id } }),
             prisma.vehicle.aggregate({
                 where: { vendedorId: id },
                 _sum: { preco: true },
-                _avg: {
-                    preco: true,
-                    anoFabricacao: true,
-                    anoModelo: true,
-                },
+                _avg: { preco: true, anoFabricacao: true, anoModelo: true },
                 _min: { preco: true },
                 _max: { preco: true },
-            })
+            }),
+            getAdditionalStats(id),
         ]);
 
-        console.log('Dados obtidos:', {
-            totalVehicles,
-            vehicleStats: {
-                sum: vehicleStats._sum?.preco,
-                avg: vehicleStats._avg?.preco,
-                min: vehicleStats._min?.preco,
-                max: vehicleStats._max?.preco
-            }
-        });
+        if (!userExists) return res.status(404).json({ message: 'Usuário não encontrado' });
 
-        // Preparar resposta
         const response = {
             totalVehicles: totalVehicles || 0,
             valorTotalInventario: vehicleStats._sum?.preco || 0,
@@ -172,34 +115,14 @@ const getUserStats = async (req, res) => {
             anoModeloMedio: Math.round(vehicleStats._avg?.anoModelo || 0),
             precoMinimo: vehicleStats._min?.preco || 0,
             precoMaximo: vehicleStats._max?.preco || 0,
+            ...additionalStats,
         };
 
-        console.log('Resposta preparada:', response);
-        console.log('=== FIM getUserStats - SUCESSO ===');
-
-        // Armazenar no cache
-        statsCache.set(cacheKey, {
-            data: response,
-            timestamp: Date.now()
-        });
-
-        // Enviar resposta apenas se não foi enviada ainda
-        if (!res.headersSent) {
-            return res.json(response);
-        }
+        statsCache.set(cacheKey, { data: response, timestamp: Date.now() });
+        if (!res.headersSent) res.json(response);
 
     } catch (error) {
-        console.error('=== ERRO em getUserStats ===');
-        console.error('Mensagem:', error.message);
-        console.error('Stack:', error.stack);
-        console.error('Código do erro:', error.code);
-        
-        // Verificar se a resposta já foi enviada antes de tentar enviar erro
-        if (!res.headersSent) {
-            handlePrismaError(error, res);
-        } else {
-            console.error('Erro ocorreu após resposta já ter sido enviada');
-        }
+        handlePrismaError(error, res);
     }
 };
 
