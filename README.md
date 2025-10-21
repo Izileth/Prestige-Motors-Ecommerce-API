@@ -3,13 +3,13 @@
 
 ![Prestige Motors](https://i.imgur.com/tG3t017.png)
 
-## 🏁 Sobre o Projeto
+##  Sobre o Projeto
 
 A **Prestige Motors API** é o backend para uma plataforma de classificados de veículos de luxo, esportivos e exóticos. Ela oferece uma solução completa para o gerenciamento de anúncios, negociações e vendas de carros, com foco em uma experiência de usuário segura e eficiente.
 
 ---
 
-## ✨ Funcionalidades Principais
+##  Funcionalidades Principais
 
 *   **Autenticação e Autorização:** Sistema completo de registro, login e gerenciamento de sessão com JSON Web Tokens (JWT), incluindo rotas protegidas e controle de acesso baseado em roles (níveis de permissão).
 *   **Gerenciamento de Usuários:** CRUD completo para usuários, incluindo gerenciamento de endereços e avatares.
@@ -23,7 +23,7 @@ A **Prestige Motors API** é o backend para uma plataforma de classificados de v
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 *   **Node.js:** Ambiente de execução do JavaScript no servidor.
 *   **Express.js:** Framework para a construção da API.
@@ -39,7 +39,7 @@ A **Prestige Motors API** é o backend para uma plataforma de classificados de v
 
 ---
 
-## 🚀 Como Executar o Projeto
+##  Como Executar o Projeto
 
 1.  **Clone o repositório:**
     ```bash
@@ -74,11 +74,11 @@ A **Prestige Motors API** é o backend para uma plataforma de classificados de v
 
 ---
 
-## 🗺️ Mapeamento de Rotas (Endpoints)
+##  Mapeamento de Rotas (Endpoints)
 
 A seguir, um detalhamento completo de todas as rotas da API, incluindo seus métodos, URLs, o que elas esperam como entrada (parâmetros, corpo da requisição) e o que elas retornam.
 
-### 👤 Autenticação e Usuários (`/api/users`)
+###  Autenticação e Usuários (`/api/users`)
 
 | Método | Rota                                | Descrição                                                                 | Autenticação | Corpo da Requisição (Body)                               | Resposta (Sucesso)                                     |
 | :----- | :---------------------------------- | :-------------------------------------------------------------------------- | :------------- | :-------------------------------------------------------- | :----------------------------------------------------- |
@@ -99,7 +99,7 @@ A seguir, um detalhamento completo de todas as rotas da API, incluindo seus mét
 | `PUT`  | `/addresses/:addressId`             | Atualiza um endereço.                                                       | Requerida      | `cep`, `logradouro`, `numero`, `bairro`, `cidade`, `estado` | Objeto `address` atualizado                            |
 | `DELETE`| `/addresses/:addressId`             | Deleta um endereço.                                                         | Requerida      | -                                                         | Mensagem de sucesso                                    |
 
-### 🚗 Veículos (`/api/vehicles`)
+###  Veículos (`/api/vehicles`)
 
 | Método | Rota                                | Descrição                                                                 | Autenticação | Corpo da Requisição (Body)                               | Resposta (Sucesso)                                     |
 | :----- | :---------------------------------- | :-------------------------------------------------------------------------- | :------------- | :-------------------------------------------------------- | :----------------------------------------------------- |
@@ -122,7 +122,7 @@ A seguir, um detalhamento completo de todas as rotas da API, incluindo seus mét
 | `PUT`  | `/reviews/:reviewId`                | Atualiza uma avaliação.                                                     | Requerida      | `rating`, `comentario`                                    | Objeto `review` atualizado                             |
 | `DELETE`| `/reviews/:reviewId`                | Deleta uma avaliação.                                                       | Requerida      | -                                                         | Mensagem de sucesso                                    |
 
-### 💬 Negociações (`/api/negotiations`)
+###  Negociações (`/api/negotiations`)
 
 | Método | Rota                                | Descrição                                                                 | Autenticação | Corpo da Requisição (Body)                               | Resposta (Sucesso)                                     |
 | :----- | :---------------------------------- | :-------------------------------------------------------------------------- | :------------- | :-------------------------------------------------------- | :----------------------------------------------------- |
@@ -134,7 +134,7 @@ A seguir, um detalhamento completo de todas as rotas da API, incluindo seus mét
 | `PUT`  | `/:negotiationId/respond`           | Responde a uma negociação (aceita, recusa ou faz contraproposta).           | Requerida      | `status` (`ACEITA`, `RECUSADA`, `CONTRA_OFERTA`), `precoNegociado` (opcional) | Objeto `negotiation` atualizado                        |
 | `DELETE`| `/:negotiationId`                   | Cancela uma negociação.                                                     | Requerida      | -                                                         | Mensagem de sucesso                                    |
 
-### 💰 Vendas (`/api/sales`)
+###  Vendas (`/api/sales`)
 
 | Método | Rota                                | Descrição                                                                 | Autenticação | Corpo da Requisição (Body)                               | Resposta (Sucesso)                                     |
 | :----- | :---------------------------------- | :-------------------------------------------------------------------------- | :------------- | :-------------------------------------------------------- | :----------------------------------------------------- |
@@ -151,20 +151,54 @@ A seguir, um detalhamento completo de todas as rotas da API, incluindo seus mét
 
 ---
 
-## 🏛️ Arquitetura do Projeto
+##  Arquitetura do Projeto
 
-O projeto segue uma arquitetura modular, com as responsabilidades bem divididas:
+A API foi desenvolvida seguindo uma **arquitetura modular e em camadas**, visando a separação de responsabilidades, escalabilidade e manutenibilidade. O design é fortemente inspirado pelos princípios de _Domain-Driven Design (DDD)_ e utiliza padrões comuns em aplicações Node.js modernas.
 
-*   **`src/config`:** Arquivos de configuração (banco de dados, multer, nodemailer).
-*   **`src/constants`:** Constantes e enums utilizados na aplicação.
-*   **`src/middleware`:** Middlewares customizados para autenticação, tratamento de erros, etc.
-*   **`src/modules`:** Onde a lógica de negócio de cada módulo (usuários, veículos, etc.) está implementada.
-*   **`src/routes`:** Definição das rotas da API.
-*   **`src/utils`:** Funções utilitárias.
-*   **`prisma`:** Schema do banco de dados e arquivos de migração.
+### Estrutura de Diretórios
+
+A organização do código-fonte no diretório `src` reflete essa abordagem:
+
+```
+src/
+├── app.js                  # Ponto de entrada da aplicação Express
+├── server.js               # Script para iniciar o servidor HTTP
+├── config/                 # Configurações de serviços externos (DB, Email, etc.)
+├── constants/              # Valores constantes e enumerações
+├── middleware/             # Middlewares do Express para requisições
+├── modules/                # Core da aplicação, com a lógica de negócio
+│   ├── users/
+│   ├── vehicles/
+│   └── ...
+├── routes/                 # Definição das rotas da API
+├── services/               # Serviços compartilhados (upload, email)
+└── utils/                  # Funções utilitárias
+```
+
+### Camadas da Arquitetura
+
+1.  **Routes (`src/routes`):** A camada mais externa, responsável por definir os endpoints da API, associar os métodos HTTP (GET, POST, PUT, DELETE) e direcionar as requisições para os middlewares e controllers apropriados.
+
+2.  **Middleware (`src/middleware`):** Funções que interceptam as requisições antes de chegarem aos controllers. Utilizadas para tarefas como:
+    *   **Autenticação e Autorização:** Verificar a validade de tokens JWT e as permissões do usuário.
+    *   **Validação de Dados:** Garantir que os dados recebidos (body, params, query) estão no formato correto.
+    *   **Logging e Monitoramento:** Registrar informações sobre as requisições.
+    *   **Segurança:** Aplicar headers de segurança e limitar a taxa de requisições.
+
+3.  **Modules/Controllers (`src/modules`):** O coração da aplicação. Cada subdiretório em `modules` representa um domínio da aplicação (ex: `users`, `vehicles`). Dentro de cada módulo, os arquivos (que atuam como controllers) contêm a lógica para manipular as requisições, interagir com os serviços e o banco de dados, e formular a resposta a ser enviada ao cliente.
+
+4.  **Services (`src/services`):** Encapsulam a lógica de negócio que pode ser reutilizada por diferentes partes da aplicação ou que depende de integrações externas. Por exemplo, o `uploadService` abstrai a complexidade do upload de arquivos para a nuvem.
+
+5.  **Data Access Layer (Prisma):** A interação com o banco de dados é gerenciada pelo Prisma ORM. O schema do banco de dados (`prisma/schema.prisma`) serve como uma fonte única da verdade para as entidades da aplicação. O Prisma Client (`src/config/prisma.js`) é utilizado nos módulos para realizar as operações de CRUD (Create, Read, Update, Delete) de forma segura e tipada.
+
+### Padrões de Design
+
+*   **Modular:** O código é dividido em módulos independentes, o que facilita a manutenção e o desenvolvimento de novas funcionalidades.
+*   **Injeção de Dependência (Implícita):** As dependências (como o Prisma Client e os serviços) são importadas nos módulos que as utilizam, o que permite um acoplamento mais baixo entre os componentes.
+*   **Middleware Pattern:** O Express faz uso extensivo do padrão de middleware para compor a lógica de processamento das requisições de forma encadeada.
 
 ---
 
-## 📝 Licença
+##  Licença
 
 Este projeto está sob a licença ISC.
