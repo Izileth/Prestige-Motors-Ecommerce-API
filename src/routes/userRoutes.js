@@ -26,7 +26,9 @@ const {
     updateUser,
     deleteUser,
     uploadAvatar,
-    deleteUserAvatar
+    deleteUserAvatar,
+    getUserBySlug,
+    updateUserSlug
 } = require('../modules/users/userModule')
 const { authenticate, authorize, checkSession } = require('../middleware/authMiddleware');
 
@@ -52,7 +54,9 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 router.get('/:id', authenticate, getUserById);
+router.get('/slug/:slug', authenticate, getUserBySlug);
 router.put('/:id', authenticate, updateUser);
+router.put('/:id/slug', authenticate, updateUserSlug);
 router.delete('/:id', authenticate, deleteUser);
 router.get('/:id/stats', authenticate, getUserStats, getUserStatsWithTimeout);
 

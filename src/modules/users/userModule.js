@@ -6,7 +6,9 @@ const {deleteUser} = require('./deleteUser')
 const {getUserStats} = require('./getUserStats')
 const {getUserAddresses} = require('./getUserAddress')
 
-const {uploadAvatar, deleteUserAvatar} = require('./getUserAvatar')
+const {deleteUserAvatar, uploadAvatar} = require('./getUserAvatar')
+const {getUserBySlug} = require('./getUserBySlug')
+const {updateUserSlug} = require('./updateUserSlug')
 
 module.exports = {
     getUsers,
@@ -16,5 +18,7 @@ module.exports = {
     getUserStats,
     getUserAddresses,
     uploadAvatar, 
-    deleteUserAvatar
+    deleteUserAvatar,
+    getUserBySlug,
+    updateUserSlug
 }

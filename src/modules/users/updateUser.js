@@ -2,11 +2,13 @@ const { PrismaClient } = require('@prisma/client');
 const { z } = require('zod');
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
+const slugify = require('slugify');
 
 
 
 const updateUserSchema = z.object({
     nome: z.string().min(3).transform(val => val.trim()).optional(),
+    slug: z.string().min(3).transform(val => val.trim()).optional(),
     email: z.string().email().transform(val => val.toLowerCase().trim()).optional(),
     senha: z.string().min(6).optional(),
     telefone: z.string()
@@ -44,7 +46,7 @@ const updateUser = async (req, res) => {
             });
         }
 
-        const { nome, email, telefone, senha, cpf, dataNascimento } = parsedData.data;
+        const { nome, email, telefone, senha, cpf, dataNascimento, slug } = parsedData.data;
 
         // Verificar permissões
         if (req.user.id !== id && req.user.role !== 'ADMIN') {
@@ -54,6 +56,20 @@ const updateUser = async (req, res) => {
         // Preparar dados para atualização
         const updateData = {};
         if (nome) updateData.nome = nome;
+
+        if (slug) {
+            const newSlug = slugify(slug, { lower: true, strict: true });
+            const existingSlug = await prisma.user.findFirst({
+                where: {
+                    slug: newSlug,
+                    NOT: { id }
+                }
+            });
+            if (existingSlug) {
+                return res.status(400).json({ message: 'Slug já está em uso' });
+            }
+            updateData.slug = newSlug;
+        }
         
         if (email) {
             const existingEmail = await prisma.user.findFirst({
@@ -105,6 +121,7 @@ const updateUser = async (req, res) => {
                 cpf: true,
                 dataNascimento: true,
                 role: true,
+                slug: true,
                 updatedAt: true
             }
         });

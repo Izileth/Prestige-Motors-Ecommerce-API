@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const slugify = require('slugify');
 
 const { z } = require('zod');
 
@@ -113,9 +114,20 @@ const register = async (req, res) => {
 
         // Preparação dos dados com tratamento completo de nulos
 
+        const baseSlug = slugify(nome, { lower: true, strict: true });
+        let slug = baseSlug;
+        let userWithSameSlug = await prisma.user.findUnique({ where: { slug } });
+        let counter = 1;
+        while (userWithSameSlug) {
+            slug = `${baseSlug}-${counter}`;
+            userWithSameSlug = await prisma.user.findUnique({ where: { slug } });
+            counter++;
+        }
+
         const userData = {
             nome: nome.trim(),
             email: email.toLowerCase().trim(),
+            slug: slug,
             senha: await bcrypt.hash(senha, 10),
             role: 'USER',
             ...(telefone && { telefone }),
@@ -186,6 +198,7 @@ const register = async (req, res) => {
                 id: newUser.id,
                 nome: newUser.nome,
                 email: newUser.email,
+                slug: newUser.slug,
                 role: newUser.role
             }
         });
