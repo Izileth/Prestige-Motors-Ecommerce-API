@@ -62,7 +62,7 @@ const updateUser = async (req, res) => {
             const existingSlug = await prisma.user.findFirst({
                 where: {
                     slug: newSlug,
-                    NOT: { id }
+                    id: { not: id }
                 }
             });
             if (existingSlug) {
@@ -75,7 +75,7 @@ const updateUser = async (req, res) => {
             const existingEmail = await prisma.user.findFirst({
                 where: { 
                     email,
-                    NOT: { id }
+                    id: { not: id }
                 }
             });
             if (existingEmail) {
@@ -90,7 +90,7 @@ const updateUser = async (req, res) => {
             const existingCpf = await prisma.user.findFirst({
                 where: { 
                     cpf,
-                    NOT: { id }
+                    id: { not: id }
                 }
             });
             if (existingCpf) {

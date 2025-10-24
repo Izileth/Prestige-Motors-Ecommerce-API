@@ -11,7 +11,7 @@ model User {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   nome                String
   email               String      @unique
-  slug                String?     @unique
+  slug                String?
   senha               String
   role                String      @default("USER")
   telefone            String?
