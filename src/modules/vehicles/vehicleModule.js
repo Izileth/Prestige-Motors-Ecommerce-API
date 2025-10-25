@@ -1,3 +1,4 @@
+const {getVehicleBySlug} = require('./getVehicleBySlug')
 const {getVehiclesByVendor} = require('./getVehicleByVendor')
 
 const {createVehicle} = require('./createVehicle')
@@ -39,6 +40,7 @@ module.exports = {
     getUserVehicles,
     updateVehicleStatus,
     getVehicleStats,
+    getVehicleBySlug,
     getVehicleAddress,
     addOrUpdateVehicleAddress,
     removeVehicleAddress

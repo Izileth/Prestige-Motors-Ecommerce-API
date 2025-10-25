@@ -1,45 +1,29 @@
-
 const { PrismaClient } = require('@prisma/client');
 const slugify = require('slugify');
 
 const prisma = new PrismaClient();
 
 async function backfillSlugs() {
-    const users = await prisma.user.findMany({
-        where: {
-            slug: null
-        }
-    });
+    try {
+        const vehicles = await prisma.vehicle.findMany();
 
-    for (const user of users) {
-        const baseSlug = slugify(user.nome, { lower: true, strict: true });
-        let slug = baseSlug;
-        let userWithSameSlug = await prisma.user.findUnique({ where: { slug } });
-        let counter = 1;
-        while (userWithSameSlug) {
-            slug = `${baseSlug}-${counter}`;
-            userWithSameSlug = await prisma.user.findUnique({ where: { slug } });
-            counter++;
+        for (const vehicle of vehicles) {
+            const slug = slugify(`${vehicle.marca}-${vehicle.modelo}-${vehicle.anoFabricacao}`, { lower: true });
+
+            await prisma.vehicle.update({
+                where: { id: vehicle.id },
+                data: { slug },
+            });
+
+            console.log(`Slug gerado para o veículo ${vehicle.id}: ${slug}`);
         }
 
-        await prisma.user.update({
-            where: {
-                id: user.id
-            },
-            data: {
-                slug: slug
-            }
-        });
-
-        console.log(`Slug gerado para o usuário ${user.nome}: ${slug}`);
+        console.log('Backfill de slugs concluído com sucesso!');
+    } catch (error) {
+        console.error('Erro durante o backfill de slugs:', error);
+    } finally {
+        await prisma.$disconnect();
     }
 }
 
-backfillSlugs()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+backfillSlugs();

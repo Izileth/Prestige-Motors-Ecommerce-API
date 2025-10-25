@@ -51,6 +51,7 @@ model User {
 
 model Vehicle {
   id                    String        @id @default(auto()) @map("_id") @db.ObjectId
+  slug                  String?      
   marca                 String
   modelo                String
   anoFabricacao         Int

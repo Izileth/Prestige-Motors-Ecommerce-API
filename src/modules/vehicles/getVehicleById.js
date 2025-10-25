@@ -29,10 +29,15 @@ const handlePrismaError = (error, res) => {
 
 const getVehicleById = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { identifier } = req.params;
         
-        const vehicle = await prisma.vehicle.findUnique({
-            where: { id },
+        const vehicle = await prisma.vehicle.findFirst({
+            where: {
+                OR: [
+                    { id: identifier },
+                    { slug: identifier }
+                ]
+            },
             include: {
                 vendedor: {
                     select: {

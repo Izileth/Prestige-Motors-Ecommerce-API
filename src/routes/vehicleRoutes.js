@@ -47,9 +47,9 @@ const {uploadMiddleware} = require('../middleware/uploadMiddleware');
 // ================ ROTAS PÚBLICAS ================
 router.get('/', getVehicles);
 router.get('/stats', getVehicleStats);
-router.get('/:id', getVehicleById);
+router.get('/:identifier', getVehicleById);
 router.get('/:id/reviews', getVehicleReviews);
-router.get('/:id/details', getVehicleDetails);
+router.get('/:identifier/details', getVehicleDetails);
 router.get('/vendors/:vendorId', getVehiclesByVendor);
 router.get('/:vehicleId/address', getVehicleAddress);
 
