@@ -27,17 +27,28 @@ const handlePrismaError = (error, res) => {
     return res.status(500).json({ message: 'Erro no servidor' });
 };
 
+const isValidObjectId = (id) => {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+};
+
 const getVehicleById = async (req, res) => {
     try {
         const { identifier } = req.params;
         
+        const isObjectId = isValidObjectId(identifier);
+
+        const whereClause = {
+            OR: [
+                { slug: identifier }
+            ]
+        };
+
+        if (isObjectId) {
+            whereClause.OR.push({ id: identifier });
+        }
+        
         const vehicle = await prisma.vehicle.findFirst({
-            where: {
-                OR: [
-                    { id: identifier },
-                    { slug: identifier }
-                ]
-            },
+            where: whereClause,
             include: {
                 vendedor: {
                     select: {
