@@ -5,8 +5,17 @@ const getVehicleBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        const vehicle = await prisma.vehicle.findUnique({
-            where: { slug },
+        console.log('🔍 Buscando veículo por slug:', slug);
+
+        if (!slug || slug.trim() === '') {
+            return res.status(400).json({ message: 'Slug inválido' });
+        }
+
+        // ✅ SOLUÇÃO: Use findFirst ao invés de findUnique
+        const vehicle = await prisma.vehicle.findFirst({
+            where: { 
+                slug: slug.trim() // Garante que não há espaços extras
+            },
             include: {
                 vendedor: {
                     select: {
@@ -54,8 +63,17 @@ const getVehicleBySlug = async (req, res) => {
             }
         });
 
-        if (!vehicle) return res.status(404).json({ message: 'Veículo não encontrado' });
+        if (!vehicle) {
+            console.log('❌ Veículo não encontrado com slug:', slug);
+            return res.status(404).json({ 
+                message: 'Veículo não encontrado',
+                slug: slug 
+            });
+        }
 
+        console.log('✅ Veículo encontrado:', vehicle.id);
+
+        // Calcula estatísticas de avaliações
         const avgRating = vehicle.avaliacoes.length > 0
             ? vehicle.avaliacoes.reduce((sum, review) => sum + review.rating, 0) / vehicle.avaliacoes.length
             : 0;
@@ -63,15 +81,26 @@ const getVehicleBySlug = async (req, res) => {
         const responseVehicle = {
             ...vehicle,
             reviewStats: {
-                averageRating: avgRating,
+                averageRating: Number(avgRating.toFixed(1)),
                 totalReviews: vehicle.avaliacoes.length
             }
         };
 
+        console.log('📊 Stats calculados - Média:', avgRating, 'Total:', vehicle.avaliacoes.length);
+
         res.json(responseVehicle);
+
     } catch (error) {
-        console.error('Erro ao buscar veículo por slug:', error);
-        res.status(500).json({ message: 'Erro no servidor' });
+        console.error('❌ Erro ao buscar veículo por slug:', error);
+        console.error('Stack:', error.stack);
+        
+        res.status(500).json({ 
+            message: 'Erro no servidor',
+            ...(process.env.NODE_ENV === 'development' && {
+                error: error.message,
+                stack: error.stack
+            })
+        });
     }
 };
 

@@ -14,6 +14,7 @@ const {
     createVehicle,
     getVehicles,
     getVehicleById,
+    getVehicleBySlug,
     getUserVehicles,
     getUserFavorites,
     getUserVehicleStats,
@@ -48,6 +49,7 @@ const {uploadMiddleware} = require('../middleware/uploadMiddleware');
 router.get('/', getVehicles);
 router.get('/stats', getVehicleStats);
 router.get('/:identifier', getVehicleById);
+router.get('/slug/:slug', getVehicleBySlug);
 router.get('/:id/reviews', getVehicleReviews);
 router.get('/:identifier/details', getVehicleDetails);
 router.get('/vendors/:vendorId', getVehiclesByVendor);
