@@ -89,9 +89,6 @@ const ENUM_MAPPINGS = {
         'concept': 'CONCEPT',
         'conceito': 'CONCEPT',
         'carro conceito': 'CONCEPT',
-        
-        // Adicionando variações em português
-        'hipercarro': 'HYPERCAR',
         'superesportivo': 'SPORTS_CAR',
         'carro de corrida': 'TRACK_TOY',
         'brinquedo de pista': 'TRACK_TOY',
@@ -99,28 +96,31 @@ const ENUM_MAPPINGS = {
         'utilitário esportivo': 'SUV',
         'hatchback': 'HOT_HATCH',
         'cupê': 'COUPE',
-        'perua': 'PERUA',
-        'station wagon': 'PERUA',
-        'minivan': 'MINIVAN',
-        'van': 'VAN'
+        'station wagon': 'PERUA'
     }
 };
 
+// Função corrigida para sanitizar enums
 const sanitizeEnum = (value, enumType) => {
     if (!value) return undefined;
     
     const input = value.toString().trim().toLowerCase();
     
-    // Verifica nos mapeamentos primeiro
-    for (const [key, mappings] of Object.entries(ENUM_MAPPINGS)) {
-        if (mappings[input] && mappings[input] === enumType[mappings[input]]) {
-        return mappings[input];
+    // Tenta encontrar o mapeamento correspondente
+    for (const [mapType, mappings] of Object.entries(ENUM_MAPPINGS)) {
+        // Verifica se o valor de entrada existe no mapeamento
+        if (mappings[input]) {
+            const mappedValue = mappings[input];
+            // Verifica se o valor mapeado existe no enum fornecido
+            if (enumType[mappedValue]) {
+                return mappedValue;
+            }
         }
     }
     
-    // Se não encontrou no mapeamento, tenta diretamente
-    const directMatch = Object.values(enumType).find(
-        v => v.toString().toLowerCase() === input
+    // Se não encontrou no mapeamento, tenta match direto com o enum
+    const directMatch = Object.keys(enumType).find(
+        key => key.toLowerCase() === input
     );
     
     return directMatch || undefined;
@@ -128,8 +128,8 @@ const sanitizeEnum = (value, enumType) => {
 
 // Utilitário para sanitizar filtros numéricos
 const sanitizeNumber = (value, min, max) => {
-  const num = Number(value);
-  return isNaN(num) ? undefined : Math.max(min, Math.min(max, num));
+    const num = Number(value);
+    return isNaN(num) ? undefined : Math.max(min, Math.min(max, num));
 };
 
 const getVehicles = async (req, res) => {
@@ -164,36 +164,38 @@ const getVehicles = async (req, res) => {
 
         // Sanitização básica dos parâmetros
         const pageNum = Math.max(1, parseInt(page) || 1);
-        const limitNum = Math.min(parseInt(limit) || 100, 200); // Limite máximo de 200 itens
+        const limitNum = Math.min(parseInt(limit) || 100, 200);
 
-        const where = {
-            status: 'DISPONIVEL'
-        };
+        const where = {};
+        
+        // Comentado para teste - descomente se o campo status existir no seu schema
+        // where.status = 'DISPONIVEL';
 
         // Filtros de texto (com sanitização)
         if (userId) where.vendedorId = userId.toString().trim();
         if (marca) where.marca = { contains: marca.toString().trim(), mode: 'insensitive' };
         if (modelo) where.modelo = { contains: modelo.toString().trim(), mode: 'insensitive' };
         
-        // Filtros numéricos com sanitização
+        // CORREÇÃO: Filtros de ano usando OR para flexibilidade
         if (anoMin || anoMax) {
-            where.anoFabricacao = {};
-            where.anoModelo = {};
-            
+            const anoFilter = {};
             const currentYear = new Date().getFullYear();
+            
             if (anoMin) {
                 const min = sanitizeNumber(anoMin, 1900, currentYear);
-                if (min) {
-                    where.anoFabricacao.gte = min;
-                    where.anoModelo.gte = min;
-                }
+                if (min !== undefined) anoFilter.gte = min;
             }
             if (anoMax) {
                 const max = sanitizeNumber(anoMax, 1900, currentYear + 1);
-                if (max) {
-                    where.anoFabricacao.lte = max;
-                    where.anoModelo.lte = max;
-                }
+                if (max !== undefined) anoFilter.lte = max;
+            }
+            
+            // Usa OR para permitir que anoFabricacao OU anoModelo satisfaça o filtro
+            if (Object.keys(anoFilter).length > 0) {
+                where.OR = [
+                    { anoFabricacao: anoFilter },
+                    { anoModelo: anoFilter }
+                ];
             }
         }
 
@@ -202,11 +204,11 @@ const getVehicles = async (req, res) => {
             where.preco = {};
             if (precoMin) {
                 const min = sanitizeNumber(precoMin, 0, Number.MAX_SAFE_INTEGER);
-                if (min) where.preco.gte = min;
+                if (min !== undefined) where.preco.gte = min;
             }
             if (precoMax) {
                 const max = sanitizeNumber(precoMax, 0, Number.MAX_SAFE_INTEGER);
-                if (max) where.preco.lte = max;
+                if (max !== undefined) where.preco.lte = max;
             }
         }
 
@@ -215,17 +217,17 @@ const getVehicles = async (req, res) => {
             where.quilometragem = {};
             if (kmMin) {
                 const min = sanitizeNumber(kmMin, 0, 1000000);
-                if (min) where.quilometragem.gte = min;
+                if (min !== undefined) where.quilometragem.gte = min;
             }
             if (kmMax) {
                 const max = sanitizeNumber(kmMax, 0, 1000000);
-                if (max) where.quilometragem.lte = max;
+                if (max !== undefined) where.quilometragem.lte = max;
             }
         }
 
-        // Filtros de enum com sanitização
+        // Filtros de enum com sanitização corrigida
         if (combustivel) {
-            where.tipoCombustivel = sanitizeEnum(combustivel, {
+            const sanitized = sanitizeEnum(combustivel, {
                 GASOLINA: 'GASOLINA',
                 ETANOL: 'ETANOL',
                 FLEX: 'FLEX',
@@ -234,19 +236,21 @@ const getVehicles = async (req, res) => {
                 HIBRIDO: 'HIBRIDO',
                 GNV: 'GNV'
             });
+            if (sanitized) where.tipoCombustivel = sanitized;
         }
 
         if (cambio) {
-            where.cambio = sanitizeEnum(cambio, {
+            const sanitized = sanitizeEnum(cambio, {
                 MANUAL: 'MANUAL',
                 AUTOMATICO: 'AUTOMATICO',
                 SEMI_AUTOMATICO: 'SEMI_AUTOMATICO',
                 CVT: 'CVT'
             });
+            if (sanitized) where.cambio = sanitized;
         }
 
         if (carroceria) {
-            where.carroceria = sanitizeEnum(carroceria, {
+            const sanitized = sanitizeEnum(carroceria, {
                 HATCH: 'HATCH',
                 SEDAN: 'SEDAN',
                 SUV: 'SUV',
@@ -259,10 +263,11 @@ const getVehicles = async (req, res) => {
                 BUGGY: 'BUGGY',
                 OFFROAD: 'OFFROAD'
             });
+            if (sanitized) where.carroceria = sanitized;
         }
 
         if (categoria) {
-            where.categoria = sanitizeEnum(categoria, {
+            const sanitized = sanitizeEnum(categoria, {
                 HYPERCAR: 'HYPERCAR',
                 SUPERCAR: 'SUPERCAR',
                 SPORTS_CAR: 'SPORTS_CAR',
@@ -281,14 +286,19 @@ const getVehicles = async (req, res) => {
                 RALLY: 'RALLY',
                 CONCEPT: 'CONCEPT'
             });
+            if (sanitized) where.categoria = sanitized;
         }
 
-        console.log('Filtro combustivel:', combustivel, '->', where.tipoCombustivel);
-        console.log('Filtro cambio:', cambio, '->', where.cambio);
-        console.log('Filtro carroceria:', carroceria, '->', where.carroceria);
-        console.log('Filtro categoria:', categoria, '->', where.categoria);
+        // Logs para debug
+        console.log('=== DEBUG FILTROS ===');
+        console.log('Query params:', req.query);
+        console.log('WHERE construído:', JSON.stringify(where, null, 2));
+        console.log('Filtros aplicados:');
+        console.log('  - combustivel:', combustivel, '->', where.tipoCombustivel);
+        console.log('  - cambio:', cambio, '->', where.cambio);
+        console.log('  - carroceria:', carroceria, '->', where.carroceria);
+        console.log('  - categoria:', categoria, '->', where.categoria);
 
-        
         // Filtro booleano
         if (destaque !== undefined) {
             where.destaque = destaque.toString().toLowerCase() === 'true';
@@ -314,6 +324,14 @@ const getVehicles = async (req, res) => {
         
         if (Object.keys(orderFields).length === 0) {
             orderFields.createdAt = 'desc';
+        }
+
+        // Log de contagem total antes dos filtros (para debug)
+        try {
+            const totalVehicles = await prisma.vehicle.count();
+            console.log(`Total de veículos no banco: ${totalVehicles}`);
+        } catch (countError) {
+            console.log('Erro ao contar veículos:', countError.message);
         }
 
         // Execução segura da query
@@ -356,9 +374,23 @@ const getVehicles = async (req, res) => {
                 }),
                 prisma.vehicle.count({ where })
             ]);
+
+            console.log(`Veículos encontrados com filtros: ${totalCount}`);
+            console.log(`Veículos retornados nesta página: ${vehicles.length}`);
+            
         } catch (dbError) {
-            console.error('Database error:', dbError);
-            // Se houver erro na query, retorna uma lista vazia mas não quebra a resposta
+            console.error('Erro na query do banco:', dbError);
+            console.error('Stack:', dbError.stack);
+            
+            // Retorna erro mais específico em desenvolvimento
+            if (process.env.NODE_ENV === 'development') {
+                return res.status(500).json({ 
+                    message: 'Erro ao executar query no banco de dados',
+                    error: dbError.message,
+                    where: where
+                });
+            }
+            
             vehicles = [];
             totalCount = 0;
         }
@@ -378,21 +410,34 @@ const getVehicles = async (req, res) => {
                     ...(combustivel && { combustivel: where.tipoCombustivel || 'invalid' }),
                     ...(cambio && { cambio: where.cambio || 'invalid' }),
                     ...(categoria && { categoria: where.categoria || 'invalid' }),
-                    ...(carroceria && { carroceria: where.carroceria || 'invalid' })
+                    ...(carroceria && { carroceria: where.carroceria || 'invalid' }),
+                    ...(anoMin && { anoMin }),
+                    ...(anoMax && { anoMax }),
+                    ...(precoMin && { precoMin }),
+                    ...(precoMax && { precoMax })
                 }
             }
         };
 
-        await redisClient.set(cacheKey, JSON.stringify(response), {
-            EX: 3600 // Cache for 1 hour
-        });
+        // Cache apenas se houver resultados
+        if (totalCount > 0) {
+            await redisClient.set(cacheKey, JSON.stringify(response), {
+                EX: 3600 // Cache por 1 hora
+            });
+        }
 
         res.json(response);
+        
     } catch (error) {
-        console.error('Erro ao buscar veículos:', error);
+        console.error('Erro geral ao buscar veículos:', error);
+        console.error('Stack completo:', error.stack);
+        
         res.status(500).json({ 
             message: 'Erro no servidor.',
-            ...(process.env.NODE_ENV === 'development' && { error: error.message })
+            ...(process.env.NODE_ENV === 'development' && { 
+                error: error.message,
+                stack: error.stack 
+            })
         });
     }
 };
