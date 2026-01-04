@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
-
 model User {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   nome                String
@@ -50,7 +50,7 @@ model User {
 
 model Vehicle {
   id                    String        @id @default(auto()) @map("_id") @db.ObjectId
-  slug                  String?      
+  slug                  String?        @unique
   marca                 String
   modelo                String
   anoFabricacao         Int

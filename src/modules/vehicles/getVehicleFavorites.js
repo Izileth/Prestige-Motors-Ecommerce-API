@@ -31,14 +31,16 @@ const handlePrismaError = (error, res) => {
  * Obtém a lista de veículos favoritos do usuário
  */
 const getVehicleFavorites = async (req, res) => {
+    console.log('Recebida requisição para getVehicleFavorites');
     try {
 
         if (!req.user || !req.user.id) {
+            console.log('Usuário não autenticado');
             return res.status(401).json({ message: 'Usuário não autenticado' });
         }
         
         const { page = 1, limit = 10, startDate, endDate } = req.query;
-    
+        console.log('Query params:', { page, limit, startDate, endDate });
 
         const where = { userId: req.user.id };
         
@@ -49,8 +51,10 @@ const getVehicleFavorites = async (req, res) => {
             };
         }
         
+        console.log('Prisma where clause:', where);
+        
         const [favorites, total] = await Promise.all([
-            prisma.favorito.findMany({
+            prisma.favorites.findMany({
                 where,
                 include: {
                     vehicle: {
@@ -76,7 +80,9 @@ const getVehicleFavorites = async (req, res) => {
             prisma.favorites.count({ where })
         ]);
         
-        res.json({
+        console.log(`Encontrados ${favorites.length} favoritos de um total de ${total}`);
+        
+        const responseData = {
             data: favorites.map(fav => ({
                 ...fav.vehicle,
                 mainImage: fav.vehicle.imagens[0]?.url,
@@ -88,7 +94,11 @@ const getVehicleFavorites = async (req, res) => {
                 limit: parseInt(limit),
                 totalPages: Math.ceil(total / parseInt(limit))
             }
-        });
+        };
+
+        console.log('Enviando resposta:', JSON.stringify(responseData, null, 2));
+        
+        res.json(responseData);
     } catch (error) {
         handlePrismaError(error, res);
     }
