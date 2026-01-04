@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { Prisma } = require('@prisma/client');
 const { uploadImages } = require('../../services/uploadService'); // Importe o serviço de upload
+const { generateUniqueSlug, slugify } = require('../../utils/slugUtils'); // Importar slugify e generateUniqueSlug
 
 const {combustivel, cambio, carroceria, categoria, classe, statusVeiculo} = require('@prisma/client')
 const prisma = new PrismaClient();
@@ -73,6 +74,17 @@ const createVehicle = async (req, res) => {
         // Validar os dados do veículo
         const validatedData = vehicleSchema.omit({ imagens: true }).parse(vehicleData);
         
+        // Gerar slug automaticamente
+        const baseSlug = slugify(
+            `${validatedData.marca}-${validatedData.modelo}-${validatedData.anoFabricacao}`, 
+            { 
+                lower: true,
+                strict: true, 
+                locale: 'pt'
+            }
+        );
+        const uniqueSlug = await generateUniqueSlug(baseSlug, undefined); // vehicleId é undefined para criação
+        
         // Processar uploads de imagens, se houver
         let imagensInfo = [];
         if (req.files && req.files.length > 0) {
@@ -96,10 +108,11 @@ const createVehicle = async (req, res) => {
             }
         }
         
-        // Criar o veículo com as imagens relacionadas
+        // Criar o veículo com as imagens relacionadas e o slug
         const vehicle = await prisma.vehicle.create({
             data: {
                 ...validatedData,
+                slug: uniqueSlug, // Adicionar o slug gerado
                 vendedorId: req.user.id,
                 imagens: {
                     create: imagensInfo

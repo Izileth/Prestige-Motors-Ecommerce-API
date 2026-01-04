@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { Prisma } = require('@prisma/client');
+const { generateUniqueSlug, slugify } = require('../../utils/slugUtils');
 const prisma = new PrismaClient();
 
 const { z } = require('zod');
@@ -37,7 +38,10 @@ const updateVehicle = async (req, res) => {
             where: { id },
             select: {
                 id: true,
-                vendedorId: true
+                vendedorId: true,
+                marca: true,
+                modelo: true,
+                anoFabricacao: true
             }
         });
 
@@ -50,14 +54,23 @@ const updateVehicle = async (req, res) => {
             return res.status(403).json({ message: 'Acesso negado: você não tem permissão para atualizar este veículo' });
         }
 
-        // Validar os dados recebidos com vehicleSchema para consistência, mas tornando todos os campos opcionais
         const updateData = {};
         const validatedData = req.body;
 
         // Mapear campos do request para o modelo do banco de dados
-        if (validatedData.marca !== undefined) updateData.marca = validatedData.marca;
-        if (validatedData.modelo !== undefined) updateData.modelo = validatedData.modelo;
-        if (validatedData.anoFabricacao !== undefined) updateData.anoFabricacao = validatedData.anoFabricacao;
+        let shouldUpdateSlug = false;
+        if (validatedData.marca !== undefined) {
+            updateData.marca = validatedData.marca;
+            if (validatedData.marca !== vehicle.marca) shouldUpdateSlug = true;
+        }
+        if (validatedData.modelo !== undefined) {
+            updateData.modelo = validatedData.modelo;
+            if (validatedData.modelo !== vehicle.modelo) shouldUpdateSlug = true;
+        }
+        if (validatedData.anoFabricacao !== undefined) {
+            updateData.anoFabricacao = validatedData.anoFabricacao;
+            if (validatedData.anoFabricacao !== vehicle.anoFabricacao) shouldUpdateSlug = true;
+        }
         if (validatedData.anoModelo !== undefined) updateData.anoModelo = validatedData.anoModelo; 
         if (validatedData.preco !== undefined) updateData.preco = validatedData.preco;
         if (validatedData.precoPromocional !== undefined) updateData.precoPromocional = validatedData.precoPromocional;
@@ -80,6 +93,19 @@ const updateVehicle = async (req, res) => {
         if (validatedData.parcelamento !== undefined) updateData.parcelamento = validatedData.parcelamento;
         if (validatedData.localizacaoId !== undefined) updateData.localizacaoId = validatedData.localizacaoId;
 
+        if (shouldUpdateSlug) {
+            const baseSlug = slugify(
+                `${updateData.marca || vehicle.marca}-${updateData.modelo || vehicle.modelo}-${updateData.anoFabricacao || vehicle.anoFabricacao}`, 
+                { 
+                    lower: true,
+                    strict: true, 
+                    locale: 'pt'
+                }
+            );
+            const uniqueSlug = await generateUniqueSlug(baseSlug, id);
+            updateData.slug = uniqueSlug;
+        }
+
         // Atualizar veículo
         const updatedVehicle = await prisma.vehicle.update({
             where: { id },
@@ -91,13 +117,8 @@ const updateVehicle = async (req, res) => {
             vehicle: updatedVehicle
         });
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({ message: 'Dados inválidos', errors: error.errors });
-        }
         handlePrismaError(error, res);
     }
 };
 
-module.exports = {
-    updateVehicle
-}
+module.exports = { updateVehicle };

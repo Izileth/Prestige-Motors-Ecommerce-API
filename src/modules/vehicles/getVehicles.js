@@ -342,7 +342,38 @@ const getVehicles = async (req, res) => {
             [vehicles, totalCount] = await Promise.all([
                 prisma.vehicle.findMany({
                     where,
-                    include: {
+                    select: { // Explicitly select fields, including slug
+                        id: true,
+                        slug: true, // Adicionar o slug aqui
+                        marca: true,
+                        modelo: true,
+                        anoFabricacao: true,
+                        anoModelo: true,
+                        preco: true,
+                        precoPromocional: true,
+                        descricao: true,
+                        quilometragem: true,
+                        tipoCombustivel: true,
+                        cambio: true,
+                        cor: true,
+                        portas: true,
+                        finalPlaca: true,
+                        carroceria: true,
+                        potencia: true,
+                        motor: true,
+                        categoria: true,
+                        classe: true,
+                        status: true,
+                        visualizacoes: true,
+                        destaque: true,
+                        seloOriginal: true,
+                        aceitaTroca: true,
+                        parcelamento: true,
+                        localizacaoId: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        vendedorId: true,
+                        aceitaNegociacao: true,
                         vendedor: {
                             select: {
                                 nome: true,
