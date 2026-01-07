@@ -79,7 +79,11 @@ const getVehicleBySlug = async (req, res) => {
                     }
                 },
                 avaliacoes: {
-                    include: {
+                    select: {
+                        id: true,
+                        rating: true,
+                        comentario: true,
+                        createdAt: true,
                         user: {
                             select: {
                                 nome: true,
